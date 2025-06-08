@@ -4,6 +4,10 @@ import pandas as pd
 import sklearn
 import pickle
 from werkzeug.exceptions import BadRequest
+import warnings
+
+# Suppress scikit-learn version mismatch warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 
 app = Flask(__name__)
 
@@ -327,15 +331,15 @@ def predict():
                 "growing_tips": ["Consult local agricultural experts for specific growing tips."],
                 "image": "crop.png"
             })
-            return render_template('index.html', 
+            return render_template('recommend.html', 
                                 result=f"{crop} is the best crop to be cultivated right there",
                                 crop_details=crop_details)
         else:
-            return render_template('index.html', 
+            return render_template('recommend.html', 
                                 error="Sorry, we could not determine the best crop to be cultivated with the provided data.")
             
     except Exception as e:
-        return render_template('index.html', error=f"An error occurred: {str(e)}")
+        return render_template('recommend.html', error=f"An error occurred: {str(e)}")
 
 @app.route('/compare')
 def compare():
@@ -383,6 +387,16 @@ def market():
 @app.route('/community')
 def community():
     return render_template('community.html')
+
+@app.route('/api/crops/<crop_name>')
+def get_crop_details(crop_name):
+    crop_info = CROP_INFO.get(crop_name)
+    if crop_info:
+        return jsonify({
+            'name': crop_name,
+            **crop_info
+        })
+    return jsonify({'error': 'Crop not found'}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)

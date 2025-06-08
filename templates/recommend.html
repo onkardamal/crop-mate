@@ -22,7 +22,53 @@
         .loading { display: none; text-align: center; margin: 1rem 0; }
         .loading-spinner { width: 3rem; height: 3rem; }
         .tooltip-inner { max-width: 200px; padding: 0.5rem 1rem; }
-        .crop-details { margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; }
+        .crop-details {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .crop-details h6 {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .crop-details p {
+            color: #34495e;
+            margin-bottom: 1rem;
+        }
+        
+        .list-group-item {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0;
+        }
+        
+        .list-group-item i {
+            color: #27ae60;
+        }
+        
+        .img-fluid {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .crop-image-container {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .crop-image-container img {
+            max-height: 300px;
+            object-fit: contain;
+        }
+        
         .growing-tips { list-style-type: none; padding-left: 0; }
         .growing-tips li { margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative; }
         .growing-tips li:before { content: "🌱"; position: absolute; left: 0; }
@@ -60,39 +106,39 @@
         <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
     </div>
     {% endif %}
-    <form action="/predict" method="POST" id="predictionForm">
+    <form action="{{ url_for('predict') }}" method="POST" id="predictionForm">
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="Nitrogen" class="form-label">Nitrogen (N)</label>
-                <input type="number" id="Nitrogen" name="Nitrogen" class="form-control" placeholder="Enter Nitrogen" required min="0" max="140" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Nitrogen content in soil (0-140)">
+                <input type="number" id="Nitrogen" name="Nitrogen" class="form-control" placeholder="Enter Nitrogen" required min="0" max="140" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Nitrogen content in soil (0-140)" value="{{ request.form.get('Nitrogen', '') }}">
             </div>
             <div class="col-md-4 mb-3">
                 <label for="Phosporus" class="form-label">Phosphorus (P)</label>
-                <input type="number" id="Phosporus" name="Phosporus" class="form-control" placeholder="Enter Phosphorus" required min="0" max="145" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Phosphorus content in soil (0-145)">
+                <input type="number" id="Phosporus" name="Phosporus" class="form-control" placeholder="Enter Phosphorus" required min="0" max="145" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Phosphorus content in soil (0-145)" value="{{ request.form.get('Phosporus', '') }}">
             </div>
             <div class="col-md-4 mb-3">
                 <label for="Potassium" class="form-label">Potassium (K)</label>
-                <input type="number" id="Potassium" name="Potassium" class="form-control" placeholder="Enter Potassium" required min="0" max="205" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Potassium content in soil (0-205)">
+                <input type="number" id="Potassium" name="Potassium" class="form-control" placeholder="Enter Potassium" required min="0" max="205" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Potassium content in soil (0-205)" value="{{ request.form.get('Potassium', '') }}">
             </div>
         </div>
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="Temperature" class="form-label">Temperature (°C)</label>
-                <input type="number" step="0.01" id="Temperature" name="Temperature" class="form-control" placeholder="Enter Temperature" required min="8" max="44" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Temperature in Celsius (8-44)">
+                <input type="number" step="0.01" id="Temperature" name="Temperature" class="form-control" placeholder="Enter Temperature" required min="8" max="44" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Temperature in Celsius (8-44)" value="{{ request.form.get('Temperature', '') }}">
             </div>
             <div class="col-md-4 mb-3">
                 <label for="Humidity" class="form-label">Humidity (%)</label>
-                <input type="number" step="0.01" id="Humidity" name="Humidity" class="form-control" placeholder="Enter Humidity" required min="14" max="100" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Relative humidity percentage (14-100)">
+                <input type="number" step="0.01" id="Humidity" name="Humidity" class="form-control" placeholder="Enter Humidity" required min="14" max="100" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Relative humidity percentage (14-100)" value="{{ request.form.get('Humidity', '') }}">
             </div>
             <div class="col-md-4 mb-3">
                 <label for="pH" class="form-label">pH Value</label>
-                <input type="number" step="0.01" id="pH" name="pH" class="form-control" placeholder="Enter pH" required min="3.5" max="10" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Soil pH value (3.5-10)">
+                <input type="number" step="0.01" id="pH" name="pH" class="form-control" placeholder="Enter pH" required min="3.5" max="10" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Soil pH value (3.5-10)" value="{{ request.form.get('pH', '') }}">
             </div>
         </div>
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="Rainfall" class="form-label">Rainfall (mm)</label>
-                <input type="number" step="0.01" id="Rainfall" name="Rainfall" class="form-control" placeholder="Enter Rainfall" required min="20" max="300" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Annual rainfall in mm (20-300)">
+                <input type="number" step="0.01" id="Rainfall" name="Rainfall" class="form-control" placeholder="Enter Rainfall" required min="20" max="300" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Annual rainfall in mm (20-300)" value="{{ request.form.get('Rainfall', '') }}">
             </div>
         </div>
         <div class="loading">
@@ -118,14 +164,53 @@
             <p class="card-text h4">{{ result }}</p>
             {% if crop_details %}
             <div class="crop-details">
-                <h6 class="mb-3">About this crop:</h6>
-                <p>{{ crop_details.description }}</p>
-                <h6 class="mb-3">Growing Tips:</h6>
-                <ul class="growing-tips">
-                    {% for tip in crop_details.growing_tips %}
-                    <li>{{ tip }}</li>
-                    {% endfor %}
-                </ul>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="crop-image-container">
+                            <img src="{{ url_for('static', filename='images/' + crop_details.image) }}" 
+                                 alt="{{ result }}" 
+                                 class="img-fluid rounded mb-3"
+                                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/crop.png') }}';">
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <h6 class="mb-3">About this crop:</h6>
+                        <p>{{ crop_details.description }}</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Growing Season:</h6>
+                                <p>{{ crop_details.growing_season }}</p>
+                                
+                                <h6 class="mb-3">Water Requirements:</h6>
+                                <p>{{ crop_details.water_requirements }}</p>
+                                
+                                <h6 class="mb-3">Soil Type:</h6>
+                                <p>{{ crop_details.soil_type }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Expected Yield:</h6>
+                                <p>{{ crop_details.expected_yield }}</p>
+                                
+                                <h6 class="mb-3">Market Price:</h6>
+                                <p>{{ crop_details.market_price }}</p>
+                                
+                                <h6 class="mb-3">Suitable Regions:</h6>
+                                <p>{{ crop_details.regions|join(', ') }}</p>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mb-3 mt-4">Growing Tips:</h6>
+                        <ul class="list-group">
+                            {% for tip in crop_details.growing_tips %}
+                            <li class="list-group-item">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                {{ tip }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
             {% endif %}
         </div>
