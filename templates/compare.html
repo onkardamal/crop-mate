@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CropMate - Compare Crops</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .container {
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            padding: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+        
+        .comparison-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .map-container {
+            height: 400px;
+            margin-top: 2rem;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .crop-selector {
+            margin-bottom: 2rem;
+        }
+        
+        .crop-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .crop-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .crop-card.selected {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-flower1"></i> CropMate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/compare">Compare Crops</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="mb-4">Compare Crops</h1>
+        
+        <div class="crop-selector">
+            <h5>Select Crops to Compare</h5>
+            <div class="row" id="cropSelector">
+                <!-- Crop cards will be dynamically added here -->
+            </div>
+        </div>
+
+        <div id="selectMessage" class="alert alert-info" style="display:none; margin-top:1rem;">Please select two crops to compare.</div>
+
+        <div class="table-responsive">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th id="crop1Header">Crop 1</th>
+                        <th id="crop2Header">Crop 2</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonTableBody">
+                    <!-- Comparison data will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="map-container" id="cropMap">
+            <!-- Map will be rendered here -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('cropMap').setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let allCrops = [];
+
+        // Function to update comparison table
+        function updateComparison(crop1, crop2) {
+            const features = [
+                'description',
+                'growing_season',
+                'water_requirements',
+                'soil_type',
+                'expected_yield',
+                'market_price'
+            ];
+
+            const tableBody = document.getElementById('comparisonTableBody');
+            tableBody.innerHTML = '';
+
+            features.forEach(feature => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${feature.replace('_', ' ').toUpperCase()}</td>
+                    <td>${crop1[feature] || 'N/A'}</td>
+                    <td>${crop2[feature] || 'N/A'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update map markers
+            updateMap(crop1, crop2);
+        }
+
+        // Function to update map markers
+        function updateMap(crop1, crop2) {
+            // Clear existing markers (but not the tile layer)
+            map.eachLayer((layer) => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            const regionCoordinates = {
+                'West Bengal': [22.57, 88.36],
+                'Uttar Pradesh': [26.85, 80.91],
+                'Punjab': [31.15, 75.34],
+                'Andhra Pradesh': [16.51, 80.64],
+                'Odisha': [20.95, 85.10],
+                'Chhattisgarh': [21.27, 81.86],
+                'Tamil Nadu': [13.08, 80.27],
+                'Bihar': [25.09, 85.31],
+                'Assam': [26.20, 92.93],
+                'Kerala': [10.85, 76.27],
+                'Karnataka': [12.97, 77.59],
+                'Madhya Pradesh': [23.25, 77.41],
+                'Maharashtra': [19.75, 75.71],
+                'Rajasthan': [26.91, 75.78],
+                'Himachal Pradesh': [31.10, 77.16],
+                'Telangana': [17.38, 78.48],
+                'Meghalaya': [25.57, 91.88],
+                'Gujarat': [22.30, 70.80],
+                'Haryana': [29.06, 76.08],
+                'Goa': [15.29, 74.12],
+                'Nagaland': [26.15, 94.56],
+                'Jammu and Kashmir': [34.08, 74.79],
+                'Uttarakhand': [30.07, 79.09],
+                'Mizoram': [23.16, 92.94],
+                'Bihar': [25.09, 85.31],
+                'Andhra Pradesh': [16.51, 80.64],
+                'Assam': [26.20, 92.93],
+                'Goa': [15.29, 74.12],
+                'West Bengal': [22.57, 88.36],
+                'Odisha': [20.95, 85.10],
+                'Kerala': [10.85, 76.27],
+                'Chhattisgarh': [21.27, 81.86],
+                'Jharkhand': [23.61, 85.27],
+                'Tripura': [23.94, 91.99],
+                'Manipur': [24.66, 93.91],
+                'Sikkim': [27.53, 88.51],
+                'Arunachal Pradesh': [27.10, 93.61],
+                'Delhi': [28.61, 77.23],
+                'Puducherry': [11.93, 79.83],
+                'Chandigarh': [30.74, 76.79],
+                'Dadra and Nagar Haveli': [20.27, 73.02],
+                'Daman and Diu': [20.42, 72.85],
+                'Lakshadweep': [10.57, 72.64],
+                'Andaman and Nicobar Islands': [11.74, 92.72],
+                'Asia': [35, 100],
+                'South America': [-20, -60],
+                'Africa': [0, 20],
+                'North America': [40, -100],
+                'Europe': [50, 10],
+                'India': [20, 77],
+                'USA': [40, -95],
+                'China': [35, 105],
+                'Bangladesh': [24, 90],
+                'Brazil': [-10, -55],
+                'Pacific Islands': [-10, 160],
+                'Mexico': [23, -102],
+                'Thailand': [15, 101],
+                'Turkey': [39, 35],
+                'Ecuador': [-2, -78],
+                'Philippines': [13, 122],
+                'Iran': [32, 53],
+                'Canada': [56, -106],
+                'Myanmar': [21, 96],
+                'Pakistan': [30, 70],
+                'Caribbean': [18, -76],
+                'Australia': [-25, 133],
+                'France': [46, 2],
+                'Italy': [42, 12]
+            };
+
+            // Add markers for crop1 regions
+            crop1.regions && crop1.regions.forEach(region => {
+                if (regionCoordinates[region]) {
+                    L.marker(regionCoordinates[region])
+                        .bindPopup(`<b>${crop1.name}</b><br>${region}`)
+                        .addTo(map);
+                }
+            });
+
+            // Add markers for crop2 regions
+            crop2.regions && crop2.regions.forEach(region => {
+                if (regionCoordinates[region]) {
+                    L.marker(regionCoordinates[region])
+                        .bindPopup(`<b>${crop2.name}</b><br>${region}`)
+                        .addTo(map);
+                }
+            });
+        }
+
+        // Function to load crop data
+        async function loadCropData() {
+            try {
+                const response = await fetch('/api/crops');
+                const crops = await response.json();
+                allCrops = crops;
+                const cropSelector = document.getElementById('cropSelector');
+                crops.forEach(crop => {
+                    const card = document.createElement('div');
+                    card.className = 'col-md-3';
+                    card.innerHTML = `
+                        <div class="crop-card" data-crop='${JSON.stringify(crop)}'>
+                            <h5>${crop.name}</h5>
+                            <p class="mb-0">${crop.description}</p>
+                        </div>
+                    `;
+                    cropSelector.appendChild(card);
+                });
+
+                // Add click handlers for up to two selections
+                document.querySelectorAll('.crop-card').forEach(card => {
+                    card.addEventListener('click', function() {
+                        const selected = document.querySelectorAll('.crop-card.selected');
+                        if (this.classList.contains('selected')) {
+                            this.classList.remove('selected');
+                        } else if (selected.length < 2) {
+                            this.classList.add('selected');
+                        } else {
+                            // If already two selected, deselect the first and select this
+                            selected[0].classList.remove('selected');
+                            this.classList.add('selected');
+                        }
+
+                        const selectedCrops = document.querySelectorAll('.crop-card.selected');
+                        if (selectedCrops.length === 2) {
+                            showSelectMessage(false);
+                            const crop1 = JSON.parse(selectedCrops[0].dataset.crop);
+                            const crop2 = JSON.parse(selectedCrops[1].dataset.crop);
+                            document.getElementById('crop1Header').textContent = crop1.name;
+                            document.getElementById('crop2Header').textContent = crop2.name;
+                            updateComparison(crop1, crop2);
+                        } else {
+                            showSelectMessage(true);
+                            document.getElementById('crop1Header').textContent = 'Crop 1';
+                            document.getElementById('crop2Header').textContent = 'Crop 2';
+                            document.getElementById('comparisonTableBody').innerHTML = '';
+                            // Clear map markers
+                            updateMap({regions: []}, {regions: []});
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading crop data:', error);
+            }
+        }
+
+        // Show message initially
+        function showSelectMessage(show) {
+            document.getElementById('selectMessage').style.display = show ? 'block' : 'none';
+        }
+        showSelectMessage(true);
+
+        // Load crop data when page loads
+        loadCropData();
+    </script>
+</body>
+</html> 

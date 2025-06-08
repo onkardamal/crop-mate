@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CropMate - Crop Recommendation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { background: #ffffff; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.05); padding: 2rem; margin-top: 2rem; margin-bottom: 2rem; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 2rem; }
+        .form-label { font-weight: 500; color: #34495e; }
+        .form-control { border-radius: 8px; border: 1px solid #ddd; padding: 0.75rem; }
+        .form-control:focus { border-color: #3498db; box-shadow: 0 0 0 0.2rem rgba(52,152,219,0.25); }
+        .btn-primary { background-color: #3498db; border: none; padding: 0.75rem 2rem; font-weight: 500; border-radius: 8px; transition: all 0.3s ease; }
+        .btn-primary:hover { background-color: #2980b9; transform: translateY(-1px); }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .error-message { color: #e74c3c; background-color: #fde8e8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        .loading { display: none; text-align: center; margin: 1rem 0; }
+        .loading-spinner { width: 3rem; height: 3rem; }
+        .tooltip-inner { max-width: 200px; padding: 0.5rem 1rem; }
+        .crop-details { margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; }
+        .growing-tips { list-style-type: none; padding-left: 0; }
+        .growing-tips li { margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative; }
+        .growing-tips li:before { content: "🌱"; position: absolute; left: 0; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-flower1"></i> CropMate
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/recommend">Crop Recommendation</a></li>
+                <li class="nav-item"><a class="nav-link" href="/compare">Compare Crops</a></li>
+                <li class="nav-item"><a class="nav-link" href="/profitability">Profitability Calculator</a></li>
+                <li class="nav-item"><a class="nav-link" href="/calendar">Seasonal Calendar</a></li>
+                <li class="nav-item"><a class="nav-link" href="/practices">Best Practices</a></li>
+                <li class="nav-item"><a class="nav-link" href="/suitability">Local Suitability</a></li>
+                <li class="nav-item"><a class="nav-link" href="/schemes">Schemes & Support</a></li>
+                <li class="nav-item"><a class="nav-link" href="/market">Market Trends</a></li>
+                <li class="nav-item"><a class="nav-link" href="/community">Community</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <h1><i class="bi bi-search"></i> Crop Recommendation System <span class="text-success">🌱</span></h1>
+    {% if error %}
+    <div class="error-message">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    {% endif %}
+    <form action="/predict" method="POST" id="predictionForm">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="Nitrogen" class="form-label">Nitrogen (N)</label>
+                <input type="number" id="Nitrogen" name="Nitrogen" class="form-control" placeholder="Enter Nitrogen" required min="0" max="140" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Nitrogen content in soil (0-140)">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="Phosporus" class="form-label">Phosphorus (P)</label>
+                <input type="number" id="Phosporus" name="Phosporus" class="form-control" placeholder="Enter Phosphorus" required min="0" max="145" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Phosphorus content in soil (0-145)">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="Potassium" class="form-label">Potassium (K)</label>
+                <input type="number" id="Potassium" name="Potassium" class="form-control" placeholder="Enter Potassium" required min="0" max="205" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Potassium content in soil (0-205)">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="Temperature" class="form-label">Temperature (°C)</label>
+                <input type="number" step="0.01" id="Temperature" name="Temperature" class="form-control" placeholder="Enter Temperature" required min="8" max="44" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Temperature in Celsius (8-44)">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="Humidity" class="form-label">Humidity (%)</label>
+                <input type="number" step="0.01" id="Humidity" name="Humidity" class="form-control" placeholder="Enter Humidity" required min="14" max="100" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Relative humidity percentage (14-100)">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="pH" class="form-label">pH Value</label>
+                <input type="number" step="0.01" id="pH" name="pH" class="form-control" placeholder="Enter pH" required min="3.5" max="10" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Soil pH value (3.5-10)">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="Rainfall" class="form-label">Rainfall (mm)</label>
+                <input type="number" step="0.01" id="Rainfall" name="Rainfall" class="form-control" placeholder="Enter Rainfall" required min="20" max="300" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Annual rainfall in mm (20-300)">
+            </div>
+        </div>
+        <div class="loading">
+            <div class="spinner-border text-primary loading-spinner" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Analyzing soil conditions...</p>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-search"></i> Get Recommendation
+                </button>
+            </div>
+        </div>
+    </form>
+    {% if result %}
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="bi bi-check-circle-fill text-success"></i> Recommended Crop
+            </h5>
+            <p class="card-text h4">{{ result }}</p>
+            {% if crop_details %}
+            <div class="crop-details">
+                <h6 class="mb-3">About this crop:</h6>
+                <p>{{ crop_details.description }}</p>
+                <h6 class="mb-3">Growing Tips:</h6>
+                <ul class="growing-tips">
+                    {% for tip in crop_details.growing_tips %}
+                    <li>{{ tip }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    // Show loading state during form submission
+    document.getElementById('predictionForm').addEventListener('submit', function() {
+        document.querySelector('.loading').style.display = 'block';
+    });
+</script>
+</body>
+</html> 
