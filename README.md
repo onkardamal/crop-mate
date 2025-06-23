@@ -9,11 +9,11 @@ CropMate is a comprehensive web application that uses machine learning to help f
 ### 🌾 Core Features (Fully Working)
 - **Crop Recommendation System**: Get personalized crop suggestions based on soil and climate data
 - **Crop Comparison Tool**: Compare two crops side-by-side with detailed analytics and interactive maps
+- **Profitability Calculator**: Estimate profits for any crop based on area and costs
+- **Seasonal Calendar**: Interactive calendar showing best sowing, growing, and harvesting times for all 22 crops
 - **Comprehensive Crop Database**: 22 crops with detailed information including growing tips, market prices, and regional suitability
 
 ### 🚧 Upcoming Features (Placeholder Pages)
-- **Profitability Calculator**: Estimate profits for any crop based on area and costs
-- **Seasonal Calendar**: Best sowing, growing, and harvesting times for each crop
 - **Best Practices**: Farming techniques and problem prevention guides
 - **Local Suitability**: Crop recommendations based on your state/district
 - **Schemes & Support**: Government schemes, subsidies, and support contacts
@@ -81,23 +81,53 @@ CropMate is a comprehensive web application that uses machine learning to help f
    - Interactive map showing crop regions
    - Detailed feature comparison table
 
+### Profitability Calculator
+1. Navigate to the "Profitability Calculator" page
+2. Select a crop from the dropdown menu
+3. Enter your farm area (in hectares) and total costs
+4. Get instant calculations showing:
+   - Expected yield based on crop type
+   - Gross revenue at current market prices
+   - Net profit after costs
+   - Profit margin percentage
+
+### Seasonal Calendar
+1. Navigate to the "Seasonal Calendar" page
+2. View the comprehensive calendar showing all 22 crops
+3. Filter by:
+   - **Show All**: View all crops at once
+   - **Season**: Filter by Kharif, Rabi, or Zaid seasons
+   - **Month**: Filter by specific months
+4. Color-coded activities:
+   - 🟢 **Green**: Sowing period
+   - 🟡 **Yellow**: Growing period
+   - 🔴 **Red**: Harvesting period
+5. Current month is highlighted with a blue border
+6. Hover over cells to see activity details
+
 ## 🏗️ Project Structure
 
 ```
 Crop_Recommendation/
 ├── app.py                 # Main Flask application
+├── data_loader.py         # Crop information and utility functions
+├── utils.py              # Input validation and utility functions
 ├── requirements.txt       # Python dependencies
 ├── model.pkl             # Trained machine learning model
 ├── standscaler.pkl       # Standard scaler for data preprocessing
 ├── minmaxscaler.pkl      # MinMax scaler for data preprocessing
 ├── Crop_recommendation.csv # Training dataset
+├── test_calendar.py      # Calendar functionality tests
+├── test_app.py           # Application tests
 ├── static/
-│   ├── images/           # Crop images
+│   ├── images/           # Crop images (22 crops)
 │   └── crop.png          # Default crop image
 ├── templates/
 │   ├── index.html        # Home page
 │   ├── recommend.html    # Crop recommendation page
 │   ├── compare.html      # Crop comparison page
+│   ├── profitability.html # Profitability calculator page
+│   ├── calendar.html     # Seasonal calendar page
 │   └── [other pages]     # Placeholder pages for upcoming features
 └── README.md             # This file
 ```
@@ -116,34 +146,46 @@ Crop_Recommendation/
 - **Machine Learning**: scikit-learn, numpy, pandas
 - **Maps**: Leaflet.js for interactive maps
 - **Icons**: Bootstrap Icons
+- **Data Processing**: Custom utilities for input validation and data parsing
 
 ### API Endpoints
 - `GET /` - Home page
 - `GET /recommend` - Crop recommendation page
 - `POST /predict` - Crop prediction API
 - `GET /compare` - Crop comparison page
+- `GET /profitability` - Profitability calculator page
+- `GET /calendar` - Seasonal calendar page
 - `GET /api/crops` - List all available crops
 - `GET /api/crops/<crop_name>` - Get detailed crop information
-- `GET /[feature]` - Various feature pages (profitability, calendar, etc.)
+- `GET /api/calendar/season/<season>` - Get crops by season
+- `GET /api/calendar/month/<month>` - Get crops by month
+- `GET /[feature]` - Various feature pages (practices, suitability, etc.)
 
 ## 🧪 Testing
 
 Run the comprehensive test suite to verify everything is working:
 
 ```bash
+# Test the main application
 python test_app.py
+
+# Test calendar functionality specifically
+python test_calendar.py
 ```
 
-This will test:
+These tests verify:
 - Server connectivity
 - Crop recommendation API
 - Crops list API
 - Individual crop details API
+- Calendar data generation
+- Seasonal filtering
+- Month range parsing
 - All application routes
 
 ## 📱 Supported Crops
 
-The application supports 22 different crops:
+The application supports 22 different crops with comprehensive data:
 
 **Grains & Cereals**: Rice, Maize  
 **Fiber Crops**: Jute, Cotton  
@@ -153,7 +195,7 @@ The application supports 22 different crops:
 
 Each crop includes:
 - Detailed description and growing tips
-- Growing season information
+- Growing season information (Kharif/Rabi/Zaid)
 - Water requirements
 - Soil type preferences
 - Expected yield estimates
@@ -161,6 +203,20 @@ Each crop includes:
 - Suitable Indian states/regions
 - Climate suitability scores
 - Profitability metrics
+- Seasonal calendar data
+
+## 🗓️ Seasonal Calendar Features
+
+The enhanced calendar system provides:
+
+- **Complete Coverage**: All 22 crops included with seasonal data
+- **Smart Filtering**: Filter by seasons (Kharif, Rabi, Zaid) or specific months
+- **Visual Indicators**: Color-coded activities with activity codes (S, G, H)
+- **Cross-Year Ranges**: Proper handling of seasons spanning year boundaries
+- **Current Month Highlighting**: Blue border around the current month
+- **Responsive Design**: Works perfectly on all device sizes
+- **Error Handling**: Graceful handling of API failures with user feedback
+- **Loading States**: Visual feedback during data loading
 
 ## 🎨 UI/UX Features
 
@@ -170,6 +226,7 @@ Each crop includes:
 - **Visual Feedback**: Success/error messages, progress indicators
 - **Accessibility**: Proper semantic HTML and ARIA labels
 - **Performance**: Optimized loading and smooth interactions
+- **Color-Coded Calendar**: Intuitive visual representation of farming activities
 
 ## 🔮 Future Enhancements
 
@@ -181,10 +238,18 @@ The application is designed to be easily extensible. Planned features include:
 4. **Advanced Analytics**: Historical data analysis and trend prediction
 5. **Farmer Community**: Social features for knowledge sharing
 6. **IoT Integration**: Sensor data integration for precision farming
+7. **Weather Integration**: Real-time weather data for better recommendations
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
 ## 📄 License
 
@@ -196,9 +261,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Icons: Bootstrap Icons
 - Maps: Leaflet.js
 - UI Framework: Bootstrap 5
+- Seasonal Data: Based on Indian agricultural practices
 
 ---
 
-**Made with ❤️ for Indian Farmers**
-
-*CropMate - Empowering farmers with data-driven decisions for a sustainable future.*
+**Last Updated**: June 2025  
+**Version**: 2.0.0  
+**Status**: Production Ready with Enhanced Calendar System
