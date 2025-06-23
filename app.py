@@ -5,6 +5,10 @@ import sklearn
 import pickle
 from werkzeug.exceptions import BadRequest
 import warnings
+import re
+import datetime
+from utils import validate_input, parse_range
+from data_loader import CROP_INFO, get_climate_suitability, get_soil_ph_range, get_soil_drainage, get_soil_fertility, get_investment_score, get_yield_score, get_market_price_score, get_profit_margin_score
 
 # Suppress scikit-learn version mismatch warnings
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -20,272 +24,132 @@ except Exception as e:
     print(f"Error loading models: {str(e)}")
     raise
 
-# Crop information dictionary
-CROP_INFO = {
-    "Rice": {
-        "description": "Rice is a staple food crop that requires warm temperatures and plenty of water.",
-        "growing_tips": ["Maintain water level at 2-3 inches", "Plant in well-drained soil", "Requires full sun"],
-        "growing_season": "Summer (June-September)",
-        "water_requirements": "High (needs standing water)",
-        "soil_type": "Clay loam, alluvial soil",
-        "expected_yield": "3-6 tons per hectare",
-        "market_price": "₹25,000-42,000 per ton",
-        "regions": ["West Bengal", "Uttar Pradesh", "Punjab", "Andhra Pradesh", "Odisha", "Chhattisgarh", "Tamil Nadu", "Bihar", "Assam", "Kerala"],
-        "image": "rice.png"
-    },
-    "Maize": {
-        "description": "Maize is a versatile crop that can be used for food, feed, and industrial purposes.",
-        "growing_tips": ["Plant in warm soil", "Space plants 8-12 inches apart", "Requires regular watering"],
-        "growing_season": "Spring to Summer",
-        "water_requirements": "Moderate (25-30 inches per season)",
-        "soil_type": "Well-drained loamy soil",
-        "expected_yield": "8-12 tons per hectare",
-        "market_price": "₹16,000-25,000 per ton",
-        "regions": ["Karnataka", "Madhya Pradesh", "Maharashtra", "Rajasthan", "Uttar Pradesh", "Bihar", "Himachal Pradesh", "Telangana"],
-        "image": "maize.png"
-    },
-    "Jute": {
-        "description": "Jute is a long, soft, shiny vegetable fiber that can be spun into coarse, strong threads.",
-        "growing_tips": ["Requires warm and humid climate", "Sow in loamy soil", "Needs plenty of water"],
-        "growing_season": "March to May",
-        "water_requirements": "High (plenty of water)",
-        "soil_type": "Loamy, alluvial soil",
-        "expected_yield": "2-3 tons per hectare",
-        "market_price": "₹33,000-50,000 per ton",
-        "regions": ["West Bengal", "Bihar", "Assam", "Odisha", "Meghalaya"],
-        "image": "jute.png"
-    },
-    "Cotton": {
-        "description": "Cotton is a fiber crop that requires warm temperatures and moderate rainfall.",
-        "growing_tips": ["Plant in warm soil", "Requires full sun", "Needs well-drained soil"],
-        "growing_season": "Spring to Fall",
-        "water_requirements": "Moderate to High (20-25 inches per season)",
-        "soil_type": "Black soil, alluvial soil",
-        "expected_yield": "2-3 bales per acre",
-        "market_price": "₹120-150 per kg",
-        "regions": ["Maharashtra", "Gujarat", "Telangana", "Andhra Pradesh", "Punjab", "Haryana", "Madhya Pradesh", "Karnataka", "Rajasthan"],
-        "image": "cotton.png"
-    },
-    "Coconut": {
-        "description": "Coconut is a tropical crop grown for its fruit and oil.",
-        "growing_tips": ["Plant in sandy soil", "Requires high humidity", "Needs regular irrigation"],
-        "growing_season": "Year-round in tropics",
-        "water_requirements": "High",
-        "soil_type": "Sandy, well-drained soil",
-        "expected_yield": "10,000-14,000 nuts per hectare",
-        "market_price": "₹15,000-22,000 per 1000 nuts",
-        "regions": ["Kerala", "Tamil Nadu", "Karnataka", "Andhra Pradesh", "West Bengal", "Odisha", "Goa", "Maharashtra"],
-        "image": "coconut.png"
-    },
-    "Papaya": {
-        "description": "Papaya is a tropical fruit crop known for its sweet taste and nutritional value.",
-        "growing_tips": ["Plant in well-drained soil", "Requires warm climate", "Irrigate regularly"],
-        "growing_season": "Spring to Summer",
-        "water_requirements": "Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "40-60 tons per hectare",
-        "market_price": "₹20,000-40,000 per ton",
-        "regions": ["Andhra Pradesh", "Gujarat", "Maharashtra", "Karnataka", "West Bengal", "Assam", "Kerala", "Tamil Nadu"],
-        "image": "papaya.png"
-    },
-    "Orange": {
-        "description": "Orange is a citrus fruit crop grown in subtropical and tropical climates.",
-        "growing_tips": ["Plant in well-drained soil", "Requires full sun", "Irrigate during dry periods"],
-        "growing_season": "Winter to Spring",
-        "water_requirements": "Moderate",
-        "soil_type": "Sandy loam, well-drained",
-        "expected_yield": "20-30 tons per hectare",
-        "market_price": "₹30,000-50,000 per ton",
-        "regions": ["Maharashtra", "Madhya Pradesh", "Punjab", "Rajasthan", "Assam", "Nagaland", "Meghalaya"],
-        "image": "orange.png"
-    },
-    "Apple": {
-        "description": "Apple is a temperate fruit crop grown in cool climates.",
-        "growing_tips": ["Plant in well-drained soil", "Requires chilling hours", "Prune trees regularly"],
-        "growing_season": "Spring to Fall",
-        "water_requirements": "Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "20-40 tons per hectare",
-        "market_price": "₹60,000-100,000 per ton",
-        "regions": ["Jammu and Kashmir", "Himachal Pradesh", "Uttarakhand"],
-        "image": "apple.png"
-    },
-    "Muskmelon": {
-        "description": "Muskmelon is a sweet, juicy fruit grown in warm climates.",
-        "growing_tips": ["Plant in sandy loam soil", "Requires full sun", "Irrigate moderately"],
-        "growing_season": "Summer",
-        "water_requirements": "Moderate",
-        "soil_type": "Sandy loam",
-        "expected_yield": "15-20 tons per hectare",
-        "market_price": "₹20,000-40,000 per ton",
-        "regions": ["Uttar Pradesh", "Punjab", "Haryana", "Rajasthan", "Madhya Pradesh", "Maharashtra", "Gujarat"],
-        "image": "muskmelon.png"
-    },
-    "Watermelon": {
-        "description": "Watermelon is a large, juicy fruit crop grown in warm climates.",
-        "growing_tips": ["Plant in sandy loam soil", "Requires full sun", "Irrigate regularly"],
-        "growing_season": "Summer",
-        "water_requirements": "High",
-        "soil_type": "Sandy loam",
-        "expected_yield": "20-40 tons per hectare",
-        "market_price": "₹16,000-33,000 per ton",
-        "regions": ["Uttar Pradesh", "Madhya Pradesh", "Rajasthan", "Maharashtra", "Karnataka", "Tamil Nadu", "West Bengal"],
-        "image": "watermelon.png"
-    },
-    "Grapes": {
-        "description": "Grapes are a fruit crop grown for eating and wine production.",
-        "growing_tips": ["Plant in well-drained soil", "Requires pruning", "Irrigate during dry periods"],
-        "growing_season": "Spring to Summer",
-        "water_requirements": "Moderate",
-        "soil_type": "Sandy loam, well-drained",
-        "expected_yield": "10-20 tons per hectare",
-        "market_price": "₹80,000-160,000 per ton",
-        "regions": ["Maharashtra", "Karnataka", "Tamil Nadu", "Mizoram", "Punjab"],
-        "image": "grapes.png"
-    },
-    "Mango": {
-        "description": "Mango is a tropical fruit crop known for its sweet flavor.",
-        "growing_tips": ["Plant in well-drained soil", "Requires full sun", "Irrigate during dry periods"],
-        "growing_season": "Spring to Summer",
-        "water_requirements": "Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "10-20 tons per hectare",
-        "market_price": "₹40,000-80,000 per ton",
-        "regions": ["Uttar Pradesh", "Andhra Pradesh", "Karnataka", "Bihar", "Gujarat", "Tamil Nadu", "West Bengal"],
-        "image": "mango.png"
-    },
-    "Banana": {
-        "description": "Banana is a tropical fruit crop grown for its edible fruit.",
-        "growing_tips": ["Plant in rich, well-drained soil", "Requires high humidity", "Irrigate regularly"],
-        "growing_season": "Year-round in tropics",
-        "water_requirements": "High",
-        "soil_type": "Rich, well-drained soil",
-        "expected_yield": "30-40 tons per hectare",
-        "market_price": "₹20,000-40,000 per ton",
-        "regions": ["Tamil Nadu", "Maharashtra", "Gujarat", "Andhra Pradesh", "Karnataka", "Assam", "Madhya Pradesh", "West Bengal"],
-        "image": "banana.png"
-    },
-    "Pomegranate": {
-        "description": "Pomegranate is a fruit crop known for its juicy seeds.",
-        "growing_tips": ["Plant in loamy soil", "Requires full sun", "Irrigate moderately"],
-        "growing_season": "Spring to Summer",
-        "water_requirements": "Low to Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "10-15 tons per hectare",
-        "market_price": "₹60,000-100,000 per ton",
-        "regions": ["Maharashtra", "Karnataka", "Gujarat", "Andhra Pradesh", "Tamil Nadu", "Rajasthan"],
-        "image": "pomegranate.png"
-    },
-    "Lentil": {
-        "description": "Lentil is a pulse crop grown for its edible seeds.",
-        "growing_tips": ["Plant in cool season", "Requires well-drained soil", "Irrigate moderately"],
-        "growing_season": "Winter to Spring",
-        "water_requirements": "Low to Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "1-2 tons per hectare",
-        "market_price": "₹50,000-75,000 per ton",
-        "regions": ["Madhya Pradesh", "Uttar Pradesh", "Bihar", "West Bengal", "Rajasthan", "Maharashtra"],
-        "image": "lentil.png"
-    },
-    "Blackgram": {
-        "description": "Blackgram is a pulse crop grown for its edible seeds.",
-        "growing_tips": ["Plant in warm season", "Requires well-drained soil", "Irrigate moderately"],
-        "growing_season": "Summer to Fall",
-        "water_requirements": "Low to Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "0.8-1.2 tons per hectare",
-        "market_price": "₹55,000-80,000 per ton",
-        "regions": ["Uttar Pradesh", "Madhya Pradesh", "Tamil Nadu", "Andhra Pradesh", "Karnataka", "Maharashtra"],
-        "image": "blackgram.png"
-    },
-    "Mungbean": {
-        "description": "Mungbean is a pulse crop grown for its edible seeds.",
-        "growing_tips": ["Plant in warm season", "Requires well-drained soil", "Irrigate moderately"],
-        "growing_season": "Summer to Fall",
-        "water_requirements": "Low to Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "0.8-1.2 tons per hectare",
-        "market_price": "₹55,000-80,000 per ton",
-        "regions": ["Rajasthan", "Maharashtra", "Karnataka", "Andhra Pradesh", "Tamil Nadu", "Uttar Pradesh"],
-        "image": "mungbean.png"
-    },
-    "Mothbeans": {
-        "description": "Mothbeans are a drought-resistant legume crop.",
-        "growing_tips": ["Plant in arid regions", "Requires minimal irrigation", "Grows in sandy soil"],
-        "growing_season": "Summer",
-        "water_requirements": "Low",
-        "soil_type": "Sandy, well-drained soil",
-        "expected_yield": "0.5-1.0 tons per hectare",
-        "market_price": "₹45,000-70,000 per ton",
-        "regions": ["Rajasthan", "Gujarat", "Madhya Pradesh", "Uttar Pradesh"],
-        "image": "mothbeans.png"
-    },
-    "Pigeonpeas": {
-        "description": "Pigeonpeas are a legume crop grown for their edible seeds.",
-        "growing_tips": ["Plant in warm season", "Requires well-drained soil", "Irrigate moderately"],
-        "growing_season": "Summer to Fall",
-        "water_requirements": "Low to Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "1-2 tons per hectare",
-        "market_price": "₹55,000-80,000 per ton",
-        "regions": ["Maharashtra", "Karnataka", "Uttar Pradesh", "Madhya Pradesh", "Gujarat", "Andhra Pradesh"],
-        "image": "pigeonpeas.png"
-    },
-    "Kidneybeans": {
-        "description": "Kidneybeans are a legume crop grown for their edible seeds.",
-        "growing_tips": ["Plant in cool season", "Requires well-drained soil", "Irrigate moderately"],
-        "growing_season": "Spring to Summer",
-        "water_requirements": "Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "1-2 tons per hectare",
-        "market_price": "₹60,000-100,000 per ton",
-        "regions": ["Uttarakhand", "Jammu and Kashmir", "Himachal Pradesh", "West Bengal", "Assam"],
-        "image": "kidneybeans.png"
-    },
-    "Chickpea": {
-        "description": "Chickpea is a pulse crop grown for its edible seeds.",
-        "growing_tips": ["Plant in cool season", "Requires well-drained soil", "Irrigate moderately"],
-        "growing_season": "Winter to Spring",
-        "water_requirements": "Low to Moderate",
-        "soil_type": "Loamy, well-drained soil",
-        "expected_yield": "1-2 tons per hectare",
-        "market_price": "₹55,000-80,000 per ton",
-        "regions": ["Madhya Pradesh", "Maharashtra", "Rajasthan", "Uttar Pradesh", "Karnataka", "Andhra Pradesh"],
-        "image": "chickpea.png"
-    },
-    "Coffee": {
-        "description": "Coffee is a tropical crop that requires specific climate conditions.",
-        "growing_tips": ["Plant in shade", "Maintain soil pH 6-6.5", "Requires regular pruning"],
-        "growing_season": "Year-round in tropical regions",
-        "water_requirements": "Moderate (60-100 inches annually)",
-        "soil_type": "Volcanic soil, well-drained",
-        "expected_yield": "1-2 tons per hectare",
-        "market_price": "₹350-600 per kg",
-        "regions": ["Karnataka", "Kerala", "Tamil Nadu"],
-        "image": "coffee.png"
-    }
+# Seasonal calendar data
+SEASONAL_DATA = {
+    "Rice": { "kharif": { "sowing": "June-July", "growing": "July-October", "harvesting": "October-November", "description": "Main rice season in most parts of India" }, "rabi": { "sowing": "November-December", "growing": "December-March", "harvesting": "March-April", "description": "Winter rice in southern states" } },
+    "Maize": { "kharif": { "sowing": "June-July", "growing": "July-October", "harvesting": "October-November", "description": "Main maize season" }, "rabi": { "sowing": "October-November", "growing": "November-February", "harvesting": "February-March", "description": "Winter maize in some regions" } },
+    "Jute": { "kharif": { "sowing": "March-April", "growing": "April-August", "harvesting": "August-September", "description": "Main jute growing season" } },
+    "Cotton": { "kharif": { "sowing": "May-June", "growing": "June-December", "harvesting": "October-January", "description": "Main cotton season" } },
+    "Coconut": { "year_round": { "sowing": "Year-round", "growing": "Year-round", "harvesting": "Year-round", "description": "Perennial crop with year-round production" } },
+    "Papaya": { "year_round": { "sowing": "Year-round", "growing": "Year-round", "harvesting": "Year-round", "description": "Perennial fruit crop" } },
+    "Orange": { "rabi": { "sowing": "July-August", "growing": "August-March", "harvesting": "December-March", "description": "Winter citrus season" } },
+    "Apple": { "rabi": { "sowing": "January-February", "growing": "February-September", "harvesting": "September-October", "description": "Temperate fruit season" } },
+    "Muskmelon": { "kharif": { "sowing": "February-March", "growing": "March-June", "harvesting": "May-July", "description": "Summer melon season" } },
+    "Watermelon": { "kharif": { "sowing": "January-March", "growing": "March-June", "harvesting": "May-July", "description": "Summer watermelon season" } },
+    "Grapes": { "rabi": { "sowing": "January-February", "growing": "February-September", "harvesting": "March-September", "description": "Main grape season" } },
+    "Mango": { "rabi": { "sowing": "July-August", "growing": "August-May", "harvesting": "March-July", "description": "Mango fruiting season" } },
+    "Banana": { "year_round": { "sowing": "Year-round", "growing": "Year-round", "harvesting": "Year-round", "description": "Perennial crop with continuous production" } },
+    "Pomegranate": { "rabi": { "sowing": "June-July", "growing": "July-March", "harvesting": "September-March", "description": "Winter pomegranate season" } },
+    "Lentil": { "rabi": { "sowing": "October-November", "growing": "November-March", "harvesting": "March-April", "description": "Winter pulse season" } },
+    "Blackgram": { "kharif": { "sowing": "June-July", "growing": "July-October", "harvesting": "October-November", "description": "Summer pulse season" } },
+    "Mungbean": { "kharif": { "sowing": "June-July", "growing": "July-October", "harvesting": "October-November", "description": "Summer pulse season" } },
+    "Mothbeans": { "kharif": { "sowing": "June-July", "growing": "July-October", "harvesting": "October-November", "description": "Drought-resistant summer pulse" } },
+    "Pigeonpeas": { "kharif": { "sowing": "June-July", "growing": "July-January", "harvesting": "December-February", "description": "Long-duration pulse crop" } },
+    "Kidneybeans": { "rabi": { "sowing": "October-November", "growing": "November-March", "harvesting": "March-April", "description": "Winter bean season" } },
+    "Chickpea": { "rabi": { "sowing": "October-November", "growing": "November-March", "harvesting": "March-April", "description": "Winter pulse season" } },
+    "Coffee": { "year_round": { "sowing": "Year-round", "growing": "Year-round", "harvesting": "November-March", "description": "Perennial crop with seasonal harvesting" } }
 }
 
-def validate_input(data):
-    """Validate input data ranges"""
-    ranges = {
-        'Nitrogen': (0, 140),
-        'Phosporus': (0, 145),
-        'Potassium': (0, 205),
-        'Temperature': (8.0, 44.0),
-        'Humidity': (14.0, 100.0),
-        'pH': (3.5, 10.0),
-        'Rainfall': (20.0, 300.0)
-    }
+# Month mapping for calendar
+MONTHS = {
+    1: "January", 2: "February", 3: "March", 4: "April",
+    5: "May", 6: "June", 7: "July", 8: "August",
+    9: "September", 10: "October", 11: "November", 12: "December"
+}
+
+def get_current_season():
+    """Get current season based on month"""
+    current_month = datetime.datetime.now().month
+    if current_month in [6, 7, 8, 9]: return "kharif"
+    elif current_month in [10, 11, 12, 1, 2, 3]: return "rabi"
+    else: return "zaid"
+
+def get_crops_by_season(season):
+    """Get crops that can be grown in a specific season"""
+    return [crop for crop, data in SEASONAL_DATA.items() if season in data or "year_round" in data]
+
+def get_month_list_from_range(month_range_str):
+    """Converts a string like 'June-July' or 'Year-round' to a list of month names."""
+    if not month_range_str or month_range_str.strip() == "":
+        return []
     
-    for key, (min_val, max_val) in ranges.items():
+    if month_range_str == "Year-round":
+        return list(MONTHS.values())
+
+    months = []
+    month_names = list(MONTHS.values())
+    parts = re.split(r'[,-]', month_range_str.strip())
+    
+    # Handle single month
+    if len(parts) == 1:
+        month = parts[0].strip()
         try:
-            value = float(data[key])
-            if not min_val <= value <= max_val:
-                return False, f"{key} should be between {min_val} and {max_val}"
-        except (ValueError, KeyError):
-            return False, f"Invalid {key} value"
-    return True, ""
+            month_index = month_names.index(month)
+            return [month]
+        except ValueError:
+            return []
+    
+    # Handle range
+    if len(parts) >= 2:
+        start_month = parts[0].strip()
+        end_month = parts[-1].strip()
+        
+        try:
+            start_index = month_names.index(start_month)
+            end_index = month_names.index(end_month)
+            
+            if start_index <= end_index:
+                # Normal range (e.g., June-July)
+                return month_names[start_index:end_index+1]
+            else:
+                # Cross-year range (e.g., October-January)
+                return month_names[start_index:] + month_names[:end_index+1]
+        except ValueError:
+            return []
+    
+    return []
+
+def get_calendar_data():
+    """Prepares all data needed for the calendar template."""
+    calendar_data = {}
+    
+    # First, add all crops from CROP_INFO to ensure all crops are included
+    for crop in CROP_INFO.keys():
+        calendar_data[crop] = {
+            'sowing': [],
+            'growing': [],
+            'harvesting': []
+        }
+    
+    # Then populate with seasonal data
+    for crop, seasons in SEASONAL_DATA.items():
+        if crop not in calendar_data:
+            calendar_data[crop] = {
+                'sowing': [],
+                'growing': [],
+                'harvesting': []
+            }
+        
+        for season, data in seasons.items():
+            # Get months for each activity and remove duplicates
+            sowing_months = get_month_list_from_range(data.get('sowing', ''))
+            growing_months = get_month_list_from_range(data.get('growing', ''))
+            harvesting_months = get_month_list_from_range(data.get('harvesting', ''))
+            
+            # Add months without duplicates
+            for month in sowing_months:
+                if month not in calendar_data[crop]['sowing']:
+                    calendar_data[crop]['sowing'].append(month)
+            
+            for month in growing_months:
+                if month not in calendar_data[crop]['growing']:
+                    calendar_data[crop]['growing'].append(month)
+            
+            for month in harvesting_months:
+                if month not in calendar_data[crop]['harvesting']:
+                    calendar_data[crop]['harvesting'].append(month)
+    
+    return calendar_data
 
 @app.route('/')
 def index():
@@ -294,7 +158,6 @@ def index():
 @app.route("/predict", methods=['POST'])
 def predict():
     try:
-        # Get form data
         data = {
             'Nitrogen': request.form['Nitrogen'],
             'Phosporus': request.form['Phosporus'],
@@ -304,26 +167,21 @@ def predict():
             'pH': request.form['pH'],
             'Rainfall': request.form['Rainfall']
         }
-        
-        # Validate input
         is_valid, error_message = validate_input(data)
         if not is_valid:
-            return render_template('index.html', error=error_message)
+            return render_template('recommend.html', error=error_message)
         
-        # Prepare features
         feature_list = [float(data[key]) for key in data.keys()]
         single_pred = np.array(feature_list).reshape(1, -1)
-        
-        # Transform and predict
         mx_features = mx.transform(single_pred)
         sc_mx_features = sc.transform(mx_features)
         prediction = model.predict(sc_mx_features)
-        
+
         crop_dict = {1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
-                    8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
-                    14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
-                    19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"}
-        
+                     8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
+                     14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
+                     19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"}
+
         if prediction[0] in crop_dict:
             crop = crop_dict[prediction[0]]
             crop_details = CROP_INFO.get(crop, {
@@ -347,26 +205,90 @@ def compare():
 
 @app.route('/api/crops')
 def get_crops():
-    crops = []
-    for name, info in CROP_INFO.items():
-        crop_data = {
-            'name': name,
-            **info
-        }
-        crops.append(crop_data)
-    return jsonify(crops)
+    return jsonify(list(CROP_INFO.keys()))
 
 @app.route('/recommend')
 def recommend():
     return render_template('recommend.html')
 
-@app.route('/profitability')
+@app.route('/profitability', methods=['GET', 'POST'])
 def profitability():
-    return render_template('profitability.html')
+    crop_names = list(CROP_INFO.keys())
+    if request.method == 'POST':
+        try:
+            crop_name = request.form['crop_name']
+            area = float(request.form['area'])
+            costs = float(request.form['costs'])
+
+            if area <= 0 or costs <= 0:
+                return render_template('profitability.html', crops=crop_names, error="Area and costs must be positive numbers.")
+            if crop_name not in CROP_INFO:
+                return render_template('profitability.html', crops=crop_names, error="Please select a valid crop.")
+            
+            crop_data = CROP_INFO[crop_name]
+            avg_yield_per_hectare = parse_range(crop_data.get('expected_yield', '0'))
+            avg_price_per_ton = parse_range(crop_data.get('market_price', '0'))
+            
+            total_yield = avg_yield_per_hectare * area
+            gross_revenue = total_yield * avg_price_per_ton
+            net_profit = gross_revenue - costs
+            
+            results = {
+                'crop_name': crop_name, 'area': area, 'total_costs': costs,
+                'avg_yield': avg_yield_per_hectare, 'avg_price': avg_price_per_ton,
+                'total_yield': total_yield, 'gross_revenue': gross_revenue,
+                'net_profit': net_profit, 'image': crop_data.get('image', 'crop.png')
+            }
+            return render_template('profitability.html', crops=crop_names, results=results)
+        except (ValueError, TypeError):
+            return render_template('profitability.html', crops=crop_names, error="Invalid input. Please enter valid numbers for area and costs.")
+        except Exception as e:
+            return render_template('profitability.html', crops=crop_names, error=f"An error occurred: {str(e)}")
+    return render_template('profitability.html', crops=crop_names)
 
 @app.route('/calendar')
 def calendar():
-    return render_template('calendar.html')
+    current_season = get_current_season()
+    seasonal_crops = get_crops_by_season(current_season)
+    template_data = {
+        'current_season': current_season.title(),
+        'current_month': MONTHS[datetime.datetime.now().month],
+        'seasonal_crops': seasonal_crops,
+        'all_crops': list(CROP_INFO.keys()),
+        'all_seasons': ['kharif', 'rabi', 'zaid'],
+        'months': list(MONTHS.values()),
+        'calendar_data': get_calendar_data(),
+        'crop_images': {crop: info.get('image', 'crop.png') for crop, info in CROP_INFO.items()}
+    }
+    return render_template('calendar.html', data=template_data)
+
+@app.route('/api/calendar/season/<season>')
+def get_seasonal_crops_api(season):
+    try:
+        crops = get_crops_by_season(season)
+        return jsonify({'crops': crops, 'season': season})
+    except Exception as e:
+        return jsonify({'error': str(e), 'crops': []}), 500
+
+@app.route('/api/calendar/month/<int:month_num>')
+def get_monthly_crops_api(month_num):
+    try:
+        if month_num not in MONTHS:
+            return jsonify({'error': 'Invalid month', 'crops': []}), 400
+        
+        month_name = MONTHS[month_num]
+        calendar_data = get_calendar_data()
+        monthly_crops = []
+        
+        for crop, data in calendar_data.items():
+            if (month_name in data['sowing'] or 
+                month_name in data['growing'] or 
+                month_name in data['harvesting']):
+                monthly_crops.append(crop)
+                
+        return jsonify({'crops': monthly_crops, 'month': month_name})
+    except Exception as e:
+        return jsonify({'error': str(e), 'crops': []}), 500
 
 @app.route('/practices')
 def practices():
@@ -390,13 +312,23 @@ def community():
 
 @app.route('/api/crops/<crop_name>')
 def get_crop_details(crop_name):
-    crop_info = CROP_INFO.get(crop_name)
-    if crop_info:
-        return jsonify({
-            'name': crop_name,
-            **crop_info
-        })
-    return jsonify({'error': 'Crop not found'}), 404
+    if crop_name not in CROP_INFO:
+        return jsonify({"error": "Crop not found"}), 404
+    
+    crop_data = CROP_INFO[crop_name].copy()
+    crop_data['climate_suitability'] = {
+        'temperature': get_climate_suitability(crop_name, 'temperature'), 'humidity': get_climate_suitability(crop_name, 'humidity'),
+        'rainfall': get_climate_suitability(crop_name, 'rainfall'), 'sunlight': get_climate_suitability(crop_name, 'sunlight'),
+        'wind': get_climate_suitability(crop_name, 'wind')
+    }
+    crop_data['soil_compatibility'] = {
+        'ph_range': get_soil_ph_range(crop_name), 'drainage': get_soil_drainage(crop_name), 'fertility': get_soil_fertility(crop_name)
+    }
+    crop_data['profitability'] = {
+        'investment': get_investment_score(crop_name), 'yield': get_yield_score(crop_name),
+        'market_price': get_market_price_score(crop_name), 'profit_margin': get_profit_margin_score(crop_name)
+    }
+    return jsonify(crop_data)
 
 if __name__ == "__main__":
     app.run(debug=True)

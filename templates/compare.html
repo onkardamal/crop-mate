@@ -5,78 +5,172 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CropMate - Compare Crops</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         body {
-            background: #f5f5f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .container {
-            background: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
-            padding: 2rem;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 2rem;
-        }
-        
-        .comparison-table th,
-        .comparison-table td {
-            padding: 1rem;
-            border: 1px solid #dee2e6;
-            text-align: left;
-        }
-        
-        .comparison-table th {
             background-color: #f8f9fa;
-            font-weight: 600;
+            padding-top: 56px;
         }
-        
-        .map-container {
-            height: 400px;
-            margin-top: 2rem;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .crop-selector {
-            margin-bottom: 2rem;
-        }
-        
         .crop-card {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
         }
-        
         .crop-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-color: #3498db;
+        }
+        .crop-card.selected {
+            border-color: #28a745;
+            background-color: #f8fff9;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        }
+        .crop-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .crop-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+        .crop-card.selected img {
+            border-color: #28a745;
+        }
+        .crop-card h6 {
+            font-size: 1.1rem;
+            margin: 0;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .comparison-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .comparison-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .map-container {
+            height: 500px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        
-        .crop-card.selected {
-            border-color: #0d6efd;
+        .feature-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .feature-badge.high {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .feature-badge.medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .feature-badge.low {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 20px 0;
+        }
+        .comparison-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table tr:hover {
             background-color: #f8f9fa;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-spinner.active {
+            display: block;
+        }
+        .select-message {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin: 20px 0;
+        }
+        .select-message i {
+            font-size: 3rem;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        .select-message h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .select-message p {
+            color: #6c757d;
+            margin-bottom: 0;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="bi bi-flower1"></i> CropMate
@@ -86,69 +180,429 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/compare">Compare Crops</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/recommend">Crop Recommendation</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/compare">Compare Crops</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/profitability">Profitability Calculator</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/calendar">Seasonal Calendar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/practices">Best Practices</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/suitability">Local Suitability</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/schemes">Schemes & Support</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/market">Market Trends</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/community">Community</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        <h1 class="mb-4">Compare Crops</h1>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Compare Crops</h2>
         
-        <div class="crop-selector">
-            <h5>Select Crops to Compare</h5>
-            <div class="row" id="cropSelector">
-                <!-- Crop cards will be dynamically added here -->
+        <!-- Crop Selection Section -->
+        <div class="row" id="cropSelector">
+            <!-- Crop cards will be dynamically added here -->
+        </div>
+
+        <!-- Select Message -->
+        <div id="selectMessage" class="select-message">
+            <i class="bi bi-arrow-left-circle"></i>
+            <h4>Select Two Crops to Compare</h4>
+            <p>Click on two different crops to see a detailed comparison</p>
+        </div>
+
+        <!-- Selected Crops Indicator -->
+        <div id="selectedCropsIndicator" class="alert alert-info" style="display: none;">
+            <h5><i class="bi bi-check-circle"></i> Selected Crops:</h5>
+            <div id="selectedCropsList" class="d-flex flex-wrap gap-2">
+                <!-- Selected crops will be displayed here -->
             </div>
+            <button class="btn btn-sm btn-outline-secondary mt-2" onclick="clearSelection()">
+                <i class="bi bi-x-circle"></i> Clear Selection
+            </button>
         </div>
 
-        <div id="selectMessage" class="alert alert-info" style="display:none; margin-top:1rem;">Please select two crops to compare.</div>
-
-        <div class="table-responsive">
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Feature</th>
-                        <th id="crop1Header">Crop 1</th>
-                        <th id="crop2Header">Crop 2</th>
-                    </tr>
-                </thead>
-                <tbody id="comparisonTableBody">
-                    <!-- Comparison data will be dynamically added here -->
-                </tbody>
-            </table>
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading comparison data...</p>
         </div>
 
-        <div class="map-container" id="cropMap">
-            <!-- Map will be rendered here -->
+        <!-- Comparison Content -->
+        <div id="comparisonContent" style="display: none;">
+            <!-- Basic Information Section -->
+            <div class="comparison-section">
+                <h3>Basic Information</h3>
+                <div class="table-responsive">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th id="crop1Header">Crop 1</th>
+                                <th id="crop2Header">Crop 2</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonTableBody">
+                            <!-- Comparison rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Climate Suitability Section -->
+            <div class="comparison-section">
+                <h3>Climate Suitability</h3>
+                <div class="chart-container">
+                    <canvas id="climateChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Soil Compatibility Section -->
+            <div class="comparison-section">
+                <h3>Soil Compatibility</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="soilDetails1" class="p-3 bg-light rounded">
+                            <!-- Soil details for crop 1 -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="soilDetails2" class="p-3 bg-light rounded">
+                            <!-- Soil details for crop 2 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profitability Section -->
+            <div class="comparison-section">
+                <h3>Profitability Analysis</h3>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="chart-container">
+                            <canvas id="profitabilityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="profitabilityDetails" class="p-3 bg-light rounded">
+                            <!-- Profitability details will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Growing Regions Section -->
+            <div class="comparison-section">
+                <h3>Growing Regions</h3>
+                <div class="map-container" id="cropMap">
+                    <!-- Map will be rendered here -->
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Initialize map
-        const map = L.map('cropMap').setView([20, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        let map;
+        let climateChart;
+        let profitabilityChart;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize map after DOM is loaded
+            map = L.map('cropMap').setView([20, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Load crops
+            loadCrops();
+        });
+
+        // Region coordinates
+        const regionCoordinates = {
+            'West Bengal': [22.57, 88.36],
+            'Uttar Pradesh': [26.85, 80.91],
+            'Punjab': [31.15, 75.34],
+            'Andhra Pradesh': [16.51, 80.64],
+            'Odisha': [20.95, 85.10],
+            'Chhattisgarh': [21.27, 81.86],
+            'Tamil Nadu': [13.08, 80.27],
+            'Bihar': [25.09, 85.31],
+            'Assam': [26.20, 92.93],
+            'Kerala': [10.85, 76.27],
+            'Karnataka': [12.97, 77.59],
+            'Madhya Pradesh': [23.25, 77.41],
+            'Maharashtra': [19.75, 75.71],
+            'Rajasthan': [26.91, 75.78],
+            'Himachal Pradesh': [31.10, 77.16],
+            'Telangana': [17.38, 78.48],
+            'Meghalaya': [25.57, 91.88],
+            'Gujarat': [22.30, 70.80],
+            'Haryana': [29.06, 76.08],
+            'Goa': [15.29, 74.12],
+            'Nagaland': [26.15, 94.56],
+            'Jammu and Kashmir': [34.08, 74.79],
+            'Uttarakhand': [30.07, 79.09],
+            'Mizoram': [23.16, 92.94],
+            'Jharkhand': [23.61, 85.27],
+            'Tripura': [23.94, 91.99],
+            'Manipur': [24.66, 93.91],
+            'Sikkim': [27.53, 88.51],
+            'Arunachal Pradesh': [27.10, 93.61],
+            'Delhi': [28.61, 77.23],
+            'Puducherry': [11.93, 79.83],
+            'Chandigarh': [30.74, 76.79],
+            'Dadra and Nagar Haveli': [20.27, 73.02],
+            'Daman and Diu': [20.42, 72.85],
+            'Lakshadweep': [10.57, 72.64],
+            'Andaman and Nicobar Islands': [11.74, 92.72]
+        };
 
         let allCrops = [];
+        let selectedCrops = [];
+        let markers = [];
 
-        // Function to update comparison table
-        function updateComparison(crop1, crop2) {
+        // Function to load crop data
+        async function loadCrops() {
+            try {
+                const response = await fetch('/api/crops');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                allCrops = await response.json();
+                displayCropSelector();
+            } catch (error) {
+                console.error('Error loading crops:', error);
+                alert('Failed to load crops. Please try refreshing the page.');
+            }
+        }
+
+        // Function to get correct image filename for a crop
+        function getCropImageFilename(cropName) {
+            const imageMap = {
+                'Rice': 'rice.png',
+                'Maize': 'maize.png',
+                'Jute': 'jute.png',
+                'Cotton': 'cotton.png',
+                'Coconut': 'coconut.png',
+                'Papaya': 'papaya.png',
+                'Orange': 'orange.png',
+                'Apple': 'apple.png',
+                'Muskmelon': 'muskmelon.png',
+                'Watermelon': 'watermelon.png',
+                'Grapes': 'grapes.png',
+                'Mango': 'mango.png',
+                'Banana': 'banana.png',
+                'Pomegranate': 'pomegranate.png',
+                'Lentil': 'lentil.png',
+                'Blackgram': 'blackgram.png',
+                'Mungbean': 'mungbean.png',
+                'Mothbeans': 'mothbeans.png',
+                'Pigeonpeas': 'pigeonpeas.png',
+                'Kidneybeans': 'kidneybeans.png',
+                'Chickpea': 'chickpea.png',
+                'Coffee': 'coffee.png'
+            };
+            return imageMap[cropName] || 'crop.png';
+        }
+
+        // Function to display crop selector
+        function displayCropSelector() {
+            const selector = document.getElementById('cropSelector');
+            selector.innerHTML = '';
+
+            allCrops.forEach(crop => {
+                const card = document.createElement('div');
+                card.className = 'col-md-4 col-lg-3 mb-3';
+                card.innerHTML = `
+                    <div class="crop-card" data-crop="${crop}">
+                        <img src="/static/images/${getCropImageFilename(crop)}" alt="${crop}" onerror="this.src='/static/images/crop.png'">
+                        <h6>${crop}</h6>
+                    </div>
+                `;
+                selector.appendChild(card);
+            });
+
+            // Add click event listeners
+            document.querySelectorAll('.crop-card').forEach(card => {
+                card.addEventListener('click', () => toggleCropSelection(card));
+            });
+        }
+
+        // Function to update selected crops indicator
+        function updateSelectedCropsIndicator() {
+            const indicator = document.getElementById('selectedCropsIndicator');
+            const list = document.getElementById('selectedCropsList');
+            
+            if (selectedCrops.length > 0) {
+                indicator.style.display = 'block';
+                list.innerHTML = '';
+                
+                selectedCrops.forEach((crop, index) => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-primary me-2';
+                    badge.innerHTML = `
+                        <img src="/static/images/${getCropImageFilename(crop)}" 
+                             alt="${crop}" 
+                             style="width: 16px; height: 16px; margin-right: 4px;"
+                             onerror="this.src='/static/images/crop.png'">
+                        ${crop}
+                        <button type="button" class="btn-close btn-close-white ms-1" 
+                                onclick="removeCrop('${crop}')" 
+                                style="font-size: 0.5em;"></button>
+                    `;
+                    list.appendChild(badge);
+                });
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        // Function to remove a specific crop from selection
+        function removeCrop(cropName) {
+            const index = selectedCrops.indexOf(cropName);
+            if (index !== -1) {
+                selectedCrops.splice(index, 1);
+                const card = document.querySelector(`[data-crop="${cropName}"]`);
+                if (card) {
+                    card.classList.remove('selected');
+                }
+                updateSelectedCropsIndicator();
+                
+                if (selectedCrops.length === 2) {
+                    updateComparison();
+                } else {
+                    document.getElementById('comparisonContent').style.display = 'none';
+                    document.getElementById('selectMessage').style.display = 'block';
+                }
+            }
+        }
+
+        // Function to clear all selections
+        function clearSelection() {
+            selectedCrops = [];
+            document.querySelectorAll('.crop-card.selected').forEach(card => {
+                card.classList.remove('selected');
+            });
+            updateSelectedCropsIndicator();
+            document.getElementById('comparisonContent').style.display = 'none';
+            document.getElementById('selectMessage').style.display = 'block';
+        }
+
+        // Function to toggle crop selection
+        function toggleCropSelection(card) {
+            const crop = card.dataset.crop;
+            const index = selectedCrops.indexOf(crop);
+
+            if (index === -1) {
+                if (selectedCrops.length < 2) {
+                    selectedCrops.push(crop);
+                    card.classList.add('selected');
+                } else {
+                    // If already have 2 crops selected, replace the first one
+                    const firstCard = document.querySelector('.crop-card.selected');
+                    if (firstCard) {
+                        firstCard.classList.remove('selected');
+                    }
+                    selectedCrops.shift();
+                    selectedCrops.push(crop);
+                    card.classList.add('selected');
+                }
+            } else {
+                selectedCrops.splice(index, 1);
+                card.classList.remove('selected');
+            }
+
+            updateSelectedCropsIndicator();
+
+            if (selectedCrops.length === 2) {
+                updateComparison();
+            } else {
+                document.getElementById('comparisonContent').style.display = 'none';
+                document.getElementById('selectMessage').style.display = 'block';
+            }
+        }
+
+        // Function to update comparison
+        async function updateComparison() {
+            if (selectedCrops.length !== 2) return;
+
+            console.log('Updating comparison for:', selectedCrops);
+
+            document.getElementById('loadingSpinner').classList.add('active');
+            document.getElementById('comparisonContent').style.display = 'none';
+            document.getElementById('selectMessage').style.display = 'none';
+
+            try {
+                const [crop1Response, crop2Response] = await Promise.all([
+                    fetch(`/api/crops/${encodeURIComponent(selectedCrops[0])}`),
+                    fetch(`/api/crops/${encodeURIComponent(selectedCrops[1])}`)
+                ]);
+
+                console.log('Crop 1 response status:', crop1Response.status);
+                console.log('Crop 2 response status:', crop2Response.status);
+
+                if (!crop1Response.ok || !crop2Response.ok) {
+                    throw new Error(`Failed to fetch crop data. Status: ${crop1Response.status}, ${crop2Response.status}`);
+                }
+
+                const crop1 = await crop1Response.json();
+                const crop2 = await crop2Response.json();
+
+                console.log('Crop 1 data:', crop1);
+                console.log('Crop 2 data:', crop2);
+
+                // Add crop names to the data
+                crop1.name = selectedCrops[0];
+                crop2.name = selectedCrops[1];
+
+                updateBasicInfo(crop1, crop2);
+                updateClimateChart(crop1, crop2);
+                updateSoilDetails(crop1, crop2);
+                updateProfitabilityChart(crop1, crop2);
+                updateMap(crop1, crop2);
+
+                document.getElementById('comparisonContent').style.display = 'block';
+                
+                // It's a common issue with Leaflet that maps in hidden divs don't initialize correctly.
+                // We need to invalidate the size once the container is visible.
+                setTimeout(() => {
+                    if (map) {
+                        map.invalidateSize();
+                        // After invalidating, we need to fit the bounds again.
+                        if (markers && markers.length > 0) {
+                            const group = new L.featureGroup(markers);
+                            map.fitBounds(group.getBounds().pad(0.1));
+                        }
+                    }
+                }, 200); // A small timeout is often needed for the container to be rendered.
+
+                console.log('Comparison updated successfully');
+            } catch (error) {
+                console.error('Error updating comparison:', error);
+                alert(`Failed to load crop comparison: ${error.message}. Please try again.`);
+                document.getElementById('selectMessage').style.display = 'block';
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('active');
+            }
+        }
+
+        // Function to update basic information
+        function updateBasicInfo(crop1, crop2) {
+            document.getElementById('crop1Header').textContent = crop1.name;
+            document.getElementById('crop2Header').textContent = crop2.name;
+
             const features = [
-                'description',
-                'growing_season',
-                'water_requirements',
-                'soil_type',
-                'expected_yield',
-                'market_price'
+                { key: 'description', label: 'Description' },
+                { key: 'growing_season', label: 'Growing Season' },
+                { key: 'water_requirements', label: 'Water Requirements' },
+                { key: 'soil_type', label: 'Soil Type' },
+                { key: 'expected_yield', label: 'Expected Yield' },
+                { key: 'market_price', label: 'Market Price' }
             ];
 
             const tableBody = document.getElementById('comparisonTableBody');
@@ -157,180 +611,240 @@
             features.forEach(feature => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${feature.replace('_', ' ').toUpperCase()}</td>
-                    <td>${crop1[feature] || 'N/A'}</td>
-                    <td>${crop2[feature] || 'N/A'}</td>
+                    <td><strong>${feature.label}</strong></td>
+                    <td>${crop1[feature.key] || 'N/A'}</td>
+                    <td>${crop2[feature.key] || 'N/A'}</td>
                 `;
                 tableBody.appendChild(row);
             });
+        }
 
-            // Update map markers
-            updateMap(crop1, crop2);
+        // Function to update climate chart
+        function updateClimateChart(crop1, crop2) {
+            const ctx = document.getElementById('climateChart').getContext('2d');
+            
+            if (climateChart) {
+                climateChart.destroy();
+            }
+
+            const climateData1 = crop1.climate_suitability || {};
+            const climateData2 = crop2.climate_suitability || {};
+
+            const defaultData = [0, 0, 0, 0, 0];
+
+            climateChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Temperature', 'Humidity', 'Rainfall', 'Sunlight', 'Wind'],
+                    datasets: [{
+                        label: crop1.name,
+                        data: [
+                            climateData1.temperature || 0,
+                            climateData1.humidity || 0,
+                            climateData1.rainfall || 0,
+                            climateData1.sunlight || 0,
+                            climateData1.wind || 0
+                        ],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)'
+                    }, {
+                        label: crop2.name,
+                        data: [
+                            climateData2.temperature || 0,
+                            climateData2.humidity || 0,
+                            climateData2.rainfall || 0,
+                            climateData2.sunlight || 0,
+                            climateData2.wind || 0
+                        ],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                stepSize: 2
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Climate Suitability Comparison'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Function to update soil details
+        function updateSoilDetails(crop1, crop2) {
+            const soilDetails1 = document.getElementById('soilDetails1');
+            const soilDetails2 = document.getElementById('soilDetails2');
+
+            const soil1 = crop1.soil_compatibility || {};
+            const soil2 = crop2.soil_compatibility || {};
+
+            soilDetails1.innerHTML = `
+                <h5 class="mb-3">${crop1.name}</h5>
+                <p class="mb-3"><strong>Preferred Soil Type:</strong> ${crop1.soil_type || 'N/A'}</p>
+                <div class="d-flex flex-wrap">
+                    <span class="feature-badge high">pH: ${soil1.ph_range || 'N/A'}</span>
+                    <span class="feature-badge medium">Drainage: ${soil1.drainage || 'N/A'}</span>
+                    <span class="feature-badge high">Fertility: ${soil1.fertility || 'N/A'}</span>
+                </div>
+            `;
+
+            soilDetails2.innerHTML = `
+                <h5 class="mb-3">${crop2.name}</h5>
+                <p class="mb-3"><strong>Preferred Soil Type:</strong> ${crop2.soil_type || 'N/A'}</p>
+                <div class="d-flex flex-wrap">
+                    <span class="feature-badge high">pH: ${soil2.ph_range || 'N/A'}</span>
+                    <span class="feature-badge medium">Drainage: ${soil2.drainage || 'N/A'}</span>
+                    <span class="feature-badge high">Fertility: ${soil2.fertility || 'N/A'}</span>
+                </div>
+            `;
+        }
+
+        // Function to update profitability chart
+        function updateProfitabilityChart(crop1, crop2) {
+            const ctx = document.getElementById('profitabilityChart').getContext('2d');
+            
+            if (profitabilityChart) {
+                profitabilityChart.destroy();
+            }
+
+            const profit1 = crop1.profitability || {};
+            const profit2 = crop2.profitability || {};
+
+            profitabilityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Investment', 'Yield', 'Market Price', 'Profit Margin'],
+                    datasets: [{
+                        label: crop1.name,
+                        data: [
+                            profit1.investment || 0,
+                            profit1.yield || 0,
+                            profit1.market_price || 0,
+                            profit1.profit_margin || 0
+                        ],
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                    }, {
+                        label: crop2.name,
+                        data: [
+                            profit2.investment || 0,
+                            profit2.yield || 0,
+                            profit2.market_price || 0,
+                            profit2.profit_margin || 0
+                        ],
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Score (0-100)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Profitability Comparison'
+                        }
+                    }
+                }
+            });
+
+            // Update profitability details
+            const details = document.getElementById('profitabilityDetails');
+            details.innerHTML = `
+                <h5 class="mb-3">Key Insights</h5>
+                <div class="mb-3">
+                    <h6>${crop1.name}</h6>
+                    <p class="mb-2">Profit Margin: ${profit1.profit_margin || 0}%</p>
+                    <p class="mb-2">Investment Required: ${profit1.investment || 0}%</p>
+                </div>
+                <div>
+                    <h6>${crop2.name}</h6>
+                    <p class="mb-2">Profit Margin: ${profit2.profit_margin || 0}%</p>
+                    <p class="mb-2">Investment Required: ${profit2.investment || 0}%</p>
+                </div>
+            `;
         }
 
         // Function to update map markers
         function updateMap(crop1, crop2) {
-            // Clear existing markers (but not the tile layer)
-            map.eachLayer((layer) => {
-                if (layer instanceof L.Marker) {
-                    map.removeLayer(layer);
-                }
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Create custom icons for differentiation
+            const blueIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
             });
 
-            const regionCoordinates = {
-                'West Bengal': [22.57, 88.36],
-                'Uttar Pradesh': [26.85, 80.91],
-                'Punjab': [31.15, 75.34],
-                'Andhra Pradesh': [16.51, 80.64],
-                'Odisha': [20.95, 85.10],
-                'Chhattisgarh': [21.27, 81.86],
-                'Tamil Nadu': [13.08, 80.27],
-                'Bihar': [25.09, 85.31],
-                'Assam': [26.20, 92.93],
-                'Kerala': [10.85, 76.27],
-                'Karnataka': [12.97, 77.59],
-                'Madhya Pradesh': [23.25, 77.41],
-                'Maharashtra': [19.75, 75.71],
-                'Rajasthan': [26.91, 75.78],
-                'Himachal Pradesh': [31.10, 77.16],
-                'Telangana': [17.38, 78.48],
-                'Meghalaya': [25.57, 91.88],
-                'Gujarat': [22.30, 70.80],
-                'Haryana': [29.06, 76.08],
-                'Goa': [15.29, 74.12],
-                'Nagaland': [26.15, 94.56],
-                'Jammu and Kashmir': [34.08, 74.79],
-                'Uttarakhand': [30.07, 79.09],
-                'Mizoram': [23.16, 92.94],
-                'Bihar': [25.09, 85.31],
-                'Andhra Pradesh': [16.51, 80.64],
-                'Assam': [26.20, 92.93],
-                'Goa': [15.29, 74.12],
-                'West Bengal': [22.57, 88.36],
-                'Odisha': [20.95, 85.10],
-                'Kerala': [10.85, 76.27],
-                'Chhattisgarh': [21.27, 81.86],
-                'Jharkhand': [23.61, 85.27],
-                'Tripura': [23.94, 91.99],
-                'Manipur': [24.66, 93.91],
-                'Sikkim': [27.53, 88.51],
-                'Arunachal Pradesh': [27.10, 93.61],
-                'Delhi': [28.61, 77.23],
-                'Puducherry': [11.93, 79.83],
-                'Chandigarh': [30.74, 76.79],
-                'Dadra and Nagar Haveli': [20.27, 73.02],
-                'Daman and Diu': [20.42, 72.85],
-                'Lakshadweep': [10.57, 72.64],
-                'Andaman and Nicobar Islands': [11.74, 92.72],
-                'Asia': [35, 100],
-                'South America': [-20, -60],
-                'Africa': [0, 20],
-                'North America': [40, -100],
-                'Europe': [50, 10],
-                'India': [20, 77],
-                'USA': [40, -95],
-                'China': [35, 105],
-                'Bangladesh': [24, 90],
-                'Brazil': [-10, -55],
-                'Pacific Islands': [-10, 160],
-                'Mexico': [23, -102],
-                'Thailand': [15, 101],
-                'Turkey': [39, 35],
-                'Ecuador': [-2, -78],
-                'Philippines': [13, 122],
-                'Iran': [32, 53],
-                'Canada': [56, -106],
-                'Myanmar': [21, 96],
-                'Pakistan': [30, 70],
-                'Caribbean': [18, -76],
-                'Australia': [-25, 133],
-                'France': [46, 2],
-                'Italy': [42, 12]
-            };
+            const greenIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
 
             // Add markers for crop1 regions
-            crop1.regions && crop1.regions.forEach(region => {
-                if (regionCoordinates[region]) {
-                    L.marker(regionCoordinates[region])
-                        .bindPopup(`<b>${crop1.name}</b><br>${region}`)
-                        .addTo(map);
-                }
-            });
+            if (crop1.regions && Array.isArray(crop1.regions)) {
+                crop1.regions.forEach(region => {
+                    if (regionCoordinates[region]) {
+                        const marker = L.marker(regionCoordinates[region], { icon: blueIcon })
+                            .bindPopup(`<b>${crop1.name}</b><br>${region}`)
+                            .addTo(map);
+                        markers.push(marker);
+                    }
+                });
+            }
 
             // Add markers for crop2 regions
-            crop2.regions && crop2.regions.forEach(region => {
-                if (regionCoordinates[region]) {
-                    L.marker(regionCoordinates[region])
-                        .bindPopup(`<b>${crop2.name}</b><br>${region}`)
-                        .addTo(map);
-                }
-            });
-        }
-
-        // Function to load crop data
-        async function loadCropData() {
-            try {
-                const response = await fetch('/api/crops');
-                const crops = await response.json();
-                allCrops = crops;
-                const cropSelector = document.getElementById('cropSelector');
-                crops.forEach(crop => {
-                    const card = document.createElement('div');
-                    card.className = 'col-md-3';
-                    card.innerHTML = `
-                        <div class="crop-card" data-crop='${JSON.stringify(crop)}'>
-                            <h5>${crop.name}</h5>
-                            <p class="mb-0">${crop.description}</p>
-                        </div>
-                    `;
-                    cropSelector.appendChild(card);
+            if (crop2.regions && Array.isArray(crop2.regions)) {
+                crop2.regions.forEach(region => {
+                    if (regionCoordinates[region]) {
+                        const marker = L.marker(regionCoordinates[region], { icon: greenIcon })
+                            .bindPopup(`<b>${crop2.name}</b><br>${region}`)
+                            .addTo(map);
+                        markers.push(marker);
+                    }
                 });
+            }
 
-                // Add click handlers for up to two selections
-                document.querySelectorAll('.crop-card').forEach(card => {
-                    card.addEventListener('click', function() {
-                        const selected = document.querySelectorAll('.crop-card.selected');
-                        if (this.classList.contains('selected')) {
-                            this.classList.remove('selected');
-                        } else if (selected.length < 2) {
-                            this.classList.add('selected');
-                        } else {
-                            // If already two selected, deselect the first and select this
-                            selected[0].classList.remove('selected');
-                            this.classList.add('selected');
-                        }
-
-                        const selectedCrops = document.querySelectorAll('.crop-card.selected');
-                        if (selectedCrops.length === 2) {
-                            showSelectMessage(false);
-                            const crop1 = JSON.parse(selectedCrops[0].dataset.crop);
-                            const crop2 = JSON.parse(selectedCrops[1].dataset.crop);
-                            document.getElementById('crop1Header').textContent = crop1.name;
-                            document.getElementById('crop2Header').textContent = crop2.name;
-                            updateComparison(crop1, crop2);
-                        } else {
-                            showSelectMessage(true);
-                            document.getElementById('crop1Header').textContent = 'Crop 1';
-                            document.getElementById('crop2Header').textContent = 'Crop 2';
-                            document.getElementById('comparisonTableBody').innerHTML = '';
-                            // Clear map markers
-                            updateMap({regions: []}, {regions: []});
-                        }
-                    });
-                });
-            } catch (error) {
-                console.error('Error loading crop data:', error);
+            // Fit map to show all markers
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            } else {
+                // If no markers, show default view
+                map.setView([20, 0], 2);
             }
         }
-
-        // Show message initially
-        function showSelectMessage(show) {
-            document.getElementById('selectMessage').style.display = show ? 'block' : 'none';
-        }
-        showSelectMessage(true);
-
-        // Load crop data when page loads
-        loadCropData();
     </script>
 </body>
 </html> 
