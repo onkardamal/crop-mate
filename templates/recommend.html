@@ -3,75 +3,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CropMate - Crop Recommendation</title>
+    <title>CropMate - Smart Recommendation</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        body { background: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container { background: #ffffff; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.05); padding: 2rem; margin-top: 2rem; margin-bottom: 2rem; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { background: #fff; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.1); padding: 2rem; margin-top: 2rem; margin-bottom: 2rem; }
         h1 { color: #2c3e50; text-align: center; margin-bottom: 2rem; }
-        .form-label { font-weight: 500; color: #34495e; }
-        .form-control { border-radius: 8px; border: 1px solid #ddd; padding: 0.75rem; }
-        .form-control:focus { border-color: #3498db; box-shadow: 0 0 0 0.2rem rgba(52,152,219,0.25); }
-        .btn-primary { background-color: #3498db; border: none; padding: 0.75rem 2rem; font-weight: 500; border-radius: 8px; transition: all 0.3s ease; }
-        .btn-primary:hover { background-color: #2980b9; transform: translateY(-1px); }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-        .error-message { color: #e74c3c; background-color: #fde8e8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
-        .loading { display: none; text-align: center; margin: 1rem 0; }
-        .loading-spinner { width: 3rem; height: 3rem; }
-        .tooltip-inner { max-width: 200px; padding: 0.5rem 1rem; }
-        .crop-details {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .crop-details h6 {
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        
-        .crop-details p {
-            color: #34495e;
-            margin-bottom: 1rem;
-        }
-        
-        .list-group-item {
-            border: none;
-            background: transparent;
-            padding: 0.5rem 0;
-        }
-        
-        .list-group-item i {
-            color: #27ae60;
-        }
-        
-        .img-fluid {
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 100%;
-            height: auto;
-        }
-        
-        .crop-image-container {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .crop-image-container img {
-            max-height: 300px;
-            object-fit: contain;
-        }
-        
-        .growing-tips { list-style-type: none; padding-left: 0; }
-        .growing-tips li { margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative; }
-        .growing-tips li:before { content: "🌱"; position: absolute; left: 0; }
+        .section-title { color: #764ba2; margin-top: 2rem; margin-bottom: 1rem; }
+        .auto-detect-btn { margin-bottom: 1rem; }
+        .result-card { border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 2rem; }
+        .suitability-score { font-size: 1.5rem; font-weight: bold; color: #28a745; }
+        .score-excellent { color: #28a745; }
+        .score-good { color: #ffc107; }
+        .score-fair { color: #fd7e14; }
+        .score-poor { color: #dc3545; }
+        .breakdown-list { font-size: 1rem; }
+        .profitability { font-size: 1.1rem; color: #007bff; }
+        .crop-image { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -86,7 +35,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/recommend">Crop Recommendation</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/recommend">Recommendation</a></li>
                 <li class="nav-item"><a class="nav-link" href="/compare">Compare Crops</a></li>
                 <li class="nav-item"><a class="nav-link" href="/profitability">Profitability Calculator</a></li>
                 <li class="nav-item"><a class="nav-link" href="/calendar">Seasonal Calendar</a></li>
@@ -100,134 +49,268 @@
     </div>
 </nav>
 <div class="container">
-    <h1><i class="bi bi-search"></i> Crop Recommendation System <span class="text-success">🌱</span></h1>
-    {% if error %}
-    <div class="error-message">
-        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
-    </div>
-    {% endif %}
-    <form action="{{ url_for('predict') }}" method="POST" id="predictionForm">
-        <div class="row">
-            <div class="col-md-4 mb-3">
+    <h1><i class="bi bi-lightbulb"></i> Smart Crop Recommendation</h1>
+    <form id="recommendForm">
+        <!-- Soil & Weather Input -->
+        <h4 class="section-title"><i class="bi bi-droplet-half"></i> Soil & Weather</h4>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
                 <label for="Nitrogen" class="form-label">Nitrogen (N)</label>
-                <input type="number" id="Nitrogen" name="Nitrogen" class="form-control" placeholder="Enter Nitrogen" required min="0" max="140" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Nitrogen content in soil (0-140)" value="{{ request.form.get('Nitrogen', '') }}">
+                <input type="number" class="form-control" id="Nitrogen" name="Nitrogen" min="0" max="140" step="0.1">
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-2">
                 <label for="Phosporus" class="form-label">Phosphorus (P)</label>
-                <input type="number" id="Phosporus" name="Phosporus" class="form-control" placeholder="Enter Phosphorus" required min="0" max="145" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Phosphorus content in soil (0-145)" value="{{ request.form.get('Phosporus', '') }}">
+                <input type="number" class="form-control" id="Phosporus" name="Phosporus" min="0" max="140" step="0.1">
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-2">
                 <label for="Potassium" class="form-label">Potassium (K)</label>
-                <input type="number" id="Potassium" name="Potassium" class="form-control" placeholder="Enter Potassium" required min="0" max="205" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Potassium content in soil (0-205)" value="{{ request.form.get('Potassium', '') }}">
+                <input type="number" class="form-control" id="Potassium" name="Potassium" min="0" max="200" step="0.1">
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-2">
+                <label for="pH" class="form-label">pH</label>
+                <input type="number" class="form-control" id="pH" name="pH" min="3" max="10" step="0.01">
+            </div>
+            <div class="col-md-2">
                 <label for="Temperature" class="form-label">Temperature (°C)</label>
-                <input type="number" step="0.01" id="Temperature" name="Temperature" class="form-control" placeholder="Enter Temperature" required min="8" max="44" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Temperature in Celsius (8-44)" value="{{ request.form.get('Temperature', '') }}">
+                <input type="number" class="form-control" id="Temperature" name="Temperature" min="0" max="50" step="0.1">
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-2">
                 <label for="Humidity" class="form-label">Humidity (%)</label>
-                <input type="number" step="0.01" id="Humidity" name="Humidity" class="form-control" placeholder="Enter Humidity" required min="14" max="100" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Relative humidity percentage (14-100)" value="{{ request.form.get('Humidity', '') }}">
+                <input type="number" class="form-control" id="Humidity" name="Humidity" min="0" max="100" step="0.1">
             </div>
-            <div class="col-md-4 mb-3">
-                <label for="pH" class="form-label">pH Value</label>
-                <input type="number" step="0.01" id="pH" name="pH" class="form-control" placeholder="Enter pH" required min="3.5" max="10" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Soil pH value (3.5-10)" value="{{ request.form.get('pH', '') }}">
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-2">
                 <label for="Rainfall" class="form-label">Rainfall (mm)</label>
-                <input type="number" step="0.01" id="Rainfall" name="Rainfall" class="form-control" placeholder="Enter Rainfall" required min="20" max="300" step="0.1" data-bs-toggle="tooltip" data-bs-placement="top" title="Annual rainfall in mm (20-300)" value="{{ request.form.get('Rainfall', '') }}">
+                <input type="number" class="form-control" id="Rainfall" name="Rainfall" min="0" max="4000" step="0.1">
             </div>
-        </div>
-        <div class="loading">
-            <div class="spinner-border text-primary loading-spinner" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Analyzing soil conditions...</p>
-        </div>
-        <div class="row mt-4">
-            <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-search"></i> Get Recommendation
+            <div class="col-md-3">
+                <button type="button" class="btn btn-primary auto-detect-btn" id="autoDetectBtn">
+                    <i class="bi bi-geo-alt"></i> Auto Detect Location & Weather
                 </button>
             </div>
         </div>
-    </form>
-    {% if result %}
-    <div class="card mt-4">
-        <div class="card-body">
-            <h5 class="card-title">
-                <i class="bi bi-check-circle-fill text-success"></i> Recommended Crop
-            </h5>
-            <p class="card-text h4">{{ result }}</p>
-            {% if crop_details %}
-            <div class="crop-details">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="crop-image-container">
-                            <img src="{{ url_for('static', filename='images/' + crop_details.image) }}" 
-                                 alt="{{ result }}" 
-                                 class="img-fluid rounded mb-3"
-                                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/crop.png') }}';">
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <h6 class="mb-3">About this crop:</h6>
-                        <p>{{ crop_details.description }}</p>
-                        
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <h6 class="mb-3">Growing Season:</h6>
-                                <p>{{ crop_details.growing_season }}</p>
-                                
-                                <h6 class="mb-3">Water Requirements:</h6>
-                                <p>{{ crop_details.water_requirements }}</p>
-                                
-                                <h6 class="mb-3">Soil Type:</h6>
-                                <p>{{ crop_details.soil_type }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="mb-3">Expected Yield:</h6>
-                                <p>{{ crop_details.expected_yield }}</p>
-                                
-                                <h6 class="mb-3">Market Price:</h6>
-                                <p>{{ crop_details.market_price }}</p>
-                                
-                                <h6 class="mb-3">Suitable Regions:</h6>
-                                <p>{{ crop_details.regions|join(', ') }}</p>
-                            </div>
-                        </div>
-                        
-                        <h6 class="mb-3 mt-4">Growing Tips:</h6>
-                        <ul class="list-group">
-                            {% for tip in crop_details.growing_tips %}
-                            <li class="list-group-item">
-                                <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                {{ tip }}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
+        <!-- Location & Season -->
+        <h4 class="section-title"><i class="bi bi-geo"></i> Location & Season</h4>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="stateSelect" class="form-label">State</label>
+                <select id="stateSelect" name="state" class="form-select">
+                    <option value="">Auto/Select State</option>
+                </select>
             </div>
-            {% endif %}
+            <div class="col-md-4">
+                <label for="districtSelect" class="form-label">District</label>
+                <select id="districtSelect" name="district" class="form-select">
+                    <option value="">Auto/Select District</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="seasonSelect" class="form-label">Season</label>
+                <select id="seasonSelect" name="season" class="form-select">
+                    <option value="">Auto/All Seasons</option>
+                    <option value="kharif">Kharif (June-Oct)</option>
+                    <option value="rabi">Rabi (Nov-Mar)</option>
+                    <option value="zaid">Zaid (Mar-Jun)</option>
+                </select>
+            </div>
         </div>
-    </div>
-    {% endif %}
+        <!-- Area & Cost (Optional) -->
+        <h4 class="section-title"><i class="bi bi-cash-coin"></i> Area & Cost (Optional)</h4>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="area" class="form-label">Area (hectares)</label>
+                <input type="number" class="form-control" id="area" name="area" min="0" step="0.01">
+            </div>
+            <div class="col-md-4">
+                <label for="costs" class="form-label">Estimated Costs (₹)</label>
+                <input type="number" class="form-control" id="costs" name="costs" min="0" step="0.01">
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-lightning-charge"></i> Get Recommendation</button>
+        </div>
+    </form>
+    <!-- Results Section -->
+    <div id="recommendationResults"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+// --- State & District Data ---
+let stateDistricts = {};
+
+// --- Load States on Page Load ---
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/states')
+        .then(res => res.json())
+        .then(states => {
+            const stateSelect = document.getElementById('stateSelect');
+            states.forEach(state => {
+                const opt = document.createElement('option');
+                opt.value = state;
+                opt.textContent = state;
+                stateSelect.appendChild(opt);
+            });
+        });
+    // Load districts when state changes
+    document.getElementById('stateSelect').addEventListener('change', function() {
+        const state = this.value;
+        loadDistricts(state);
     });
-    // Show loading state during form submission
-    document.getElementById('predictionForm').addEventListener('submit', function() {
-        document.querySelector('.loading').style.display = 'block';
+    // Auto-detect button
+    document.getElementById('autoDetectBtn').addEventListener('click', autoDetectAll);
+    // Form submit
+    document.getElementById('recommendForm').addEventListener('submit', handleRecommendationSubmit);
+});
+
+function loadDistricts(state) {
+    const districtSelect = document.getElementById('districtSelect');
+    districtSelect.innerHTML = '<option value="">Auto/Select District</option>';
+    if (!state) return;
+    fetch(`/api/suitability/${encodeURIComponent(state)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.state_info && data.state_info.districts) {
+                data.state_info.districts.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    districtSelect.appendChild(opt);
+                });
+                // Auto-select if only one district
+                if (data.state_info.districts.length === 1) {
+                    districtSelect.value = data.state_info.districts[0];
+                }
+            }
+        });
+}
+
+// --- Auto Detect Location & Weather ---
+function autoDetectAll() {
+    const btn = document.getElementById('autoDetectBtn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Detecting...';
+    btn.disabled = true;
+    fetch('/api/auto-detect')
+        .then(res => res.json())
+        .then(data => {
+            // Fill state
+            if (data.nearest_state) {
+                document.getElementById('stateSelect').value = data.nearest_state;
+                loadDistricts(data.nearest_state);
+            }
+            // Fill weather
+            if (data.weather) {
+                if (data.weather.temperature) document.getElementById('Temperature').value = data.weather.temperature;
+                if (data.weather.humidity) document.getElementById('Humidity').value = data.weather.humidity;
+                if (data.weather.rainfall) document.getElementById('Rainfall').value = data.weather.rainfall;
+            } else if (data.climate_zone) {
+                document.getElementById('Temperature').value = data.climate_zone.current_temp;
+                document.getElementById('Humidity').value = data.climate_zone.current_humidity;
+            }
+        })
+        .catch(() => showAlert('Auto-detect failed. Please fill manually.', 'danger'))
+        .finally(() => {
+            btn.innerHTML = '<i class="bi bi-geo-alt"></i> Auto Detect Location & Weather';
+            btn.disabled = false;
+        });
+}
+
+// --- Form Submission ---
+function handleRecommendationSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const payload = {};
+    formData.forEach((v, k) => { if (v) payload[k] = v; });
+    showLoading();
+    // AJAX POST
+    fetch('/api/smart-recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => displayRecommendationResults(data, payload))
+    .catch(() => showAlert('Failed to get recommendation.', 'danger'))
+    .finally(hideLoading);
+}
+
+// --- Loading Spinner ---
+function showLoading() {
+    const resultsDiv = document.getElementById('recommendationResults');
+    resultsDiv.innerHTML = `<div class='text-center my-4'><div class='spinner-border text-primary' role='status'></div><p>Analyzing your inputs...</p></div>`;
+}
+function hideLoading() {
+    // No-op: handled by displayRecommendationResults
+}
+
+// --- Display Results (Top 3 Crops) ---
+function displayRecommendationResults(data, payload) {
+    const resultsDiv = document.getElementById('recommendationResults');
+    if (data.error) {
+        resultsDiv.innerHTML = `<div class='alert alert-danger'><i class='bi bi-exclamation-triangle'></i> ${data.error}</div>`;
+        return;
+    }
+    if (!data.top_crops || data.top_crops.length === 0) {
+        resultsDiv.innerHTML = `<div class='alert alert-warning'>No suitable crop found for the given inputs.</div>`;
+        return;
+    }
+    // Show top 3 crops
+    resultsDiv.innerHTML = `<h3 class='mb-3'><i class='bi bi-award'></i> Top Recommendations</h3>` +
+        data.top_crops.map((crop, idx) => cropCardHTML(crop, idx)).join('');
+    // Add expand/collapse for details
+    data.top_crops.forEach((crop, idx) => {
+        document.getElementById(`expandBtn${idx}`).onclick = function() {
+            const details = document.getElementById(`details${idx}`);
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+            this.innerHTML = details.style.display === 'none' ? 'Show Details' : 'Hide Details';
+        };
     });
+    // Retain user input
+    for (const [k, v] of Object.entries(payload)) {
+        if (document.getElementById(k)) document.getElementById(k).value = v;
+    }
+}
+function cropCardHTML(crop, idx) {
+    return `
+    <div class='card result-card mb-4'>
+        <div class='card-body'>
+            <div class='row align-items-center'>
+                <div class='col-md-3 text-center'>
+                    <img src='/static/images/${crop.image || 'crop.png'}' class='crop-image mb-2' alt='${crop.crop}'>
+                    <h4>${crop.crop}</h4>
+                    <div class='suitability-score ${getScoreClass(crop.total_score)}'>${crop.total_score}%</div>
+                </div>
+                <div class='col-md-9'>
+                    <button class='btn btn-outline-primary btn-sm mb-2' id='expandBtn${idx}'>Show Details</button>
+                    <div id='details${idx}' style='display:none;'>
+                        <h6>Why this crop?</h6>
+                        <ul class='breakdown-list'>
+                            <li><b>Soil/Nutrient Fit:</b> ${crop.breakdown.soil_score}%</li>
+                            <li><b>Weather Fit:</b> ${crop.breakdown.weather_score}%</li>
+                            <li><b>Local Suitability:</b> ${crop.breakdown.local_score}%</li>
+                            <li><b>Seasonal Fit:</b> ${crop.breakdown.season_score}%</li>
+                            <li><b>Profitability:</b> ${crop.breakdown.profit_score}%</li>
+                        </ul>
+                        <div class='profitability'><b>Estimated Profit:</b> ₹${crop.estimated_profit || 'N/A'}</div>
+                        <div class='mt-2'><b>Description:</b> ${crop.description || ''}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+function getScoreClass(score) {
+    if (score >= 80) return 'score-excellent';
+    if (score >= 60) return 'score-good';
+    if (score >= 40) return 'score-fair';
+    return 'score-poor';
+}
+function showAlert(msg, type) {
+    const div = document.createElement('div');
+    div.className = `alert alert-${type}`;
+    div.innerHTML = msg;
+    document.getElementById('recommendationResults').prepend(div);
+    setTimeout(() => div.remove(), 4000);
+}
 </script>
 </body>
 </html> 

@@ -1143,5 +1143,108 @@ def adjust_score_for_weather(crop_name, weather_data, climate_zone):
     
     return max(0, min(100, base_score))  # Ensure score is between 0-100
 
+@app.route('/api/smart-recommend', methods=['POST'])
+def smart_recommend():
+    try:
+        data = request.get_json()
+        # 1. Soil/Nutrient ML prediction
+        soil_features = []
+        for key in ['Nitrogen', 'Phosporus', 'Potassium', 'Temperature', 'Humidity', 'pH', 'Rainfall']:
+            val = data.get(key)
+            if val is None or val == '':
+                soil_features.append(0)
+            else:
+                soil_features.append(float(val))
+        ml_pred = model.predict(sc.transform(mx.transform([soil_features])))[0]
+        crop_dict = {1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
+                     8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
+                     14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
+                     19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"}
+        ml_crop = crop_dict.get(ml_pred, None)
+        # 2. Local suitability
+        state = data.get('state')
+        season = data.get('season')
+        local_scores = {}
+        for crop in CROP_INFO.keys():
+            local_result = calculate_location_suitability(crop, state, season) if state else {'total_score': 50}
+            local_scores[crop] = local_result['total_score'] if isinstance(local_result, dict) else local_result
+        # 3. Weather adjustment
+        temp = float(data.get('Temperature', 0))
+        humidity = float(data.get('Humidity', 0))
+        weather_scores = {}
+        for crop in CROP_INFO.keys():
+            temp_suit = get_climate_suitability(crop, 'temperature')
+            hum_suit = get_climate_suitability(crop, 'humidity')
+            score = 0
+            if temp_suit >= 8 and temp >= 25:
+                score += 10
+            elif temp_suit <= 5 and temp <= 20:
+                score += 10
+            else:
+                score += 5
+            if hum_suit >= 8 and humidity >= 70:
+                score += 10
+            elif hum_suit <= 5 and humidity <= 50:
+                score += 10
+            else:
+                score += 5
+            weather_scores[crop] = score
+        # 4. Season fit
+        season_scores = {}
+        for crop in CROP_INFO.keys():
+            if season:
+                season_scores[crop] = calculate_seasonal_compatibility(crop, season, INDIAN_STATES.get(state, {}))
+            else:
+                season_scores[crop] = 7
+        # 5. Profitability
+        profit_scores = {}
+        area = float(data.get('area', 0) or 0)
+        costs = float(data.get('costs', 0) or 0)
+        for crop in CROP_INFO.keys():
+            try:
+                avg_yield = parse_range(CROP_INFO[crop].get('expected_yield', '0'))
+                avg_price = parse_range(CROP_INFO[crop].get('market_price', '0'))
+                total_yield = avg_yield * area if area else 0
+                gross_revenue = total_yield * avg_price
+                net_profit = gross_revenue - costs if area and costs else 0
+                score = 10 if net_profit > 0 else 5
+                profit_scores[crop] = score
+            except:
+                profit_scores[crop] = 5
+        # Weighted sum for all crops
+        crop_results = []
+        for crop in CROP_INFO.keys():
+            ml_score = 100 if crop == ml_crop else 60
+            local_score = local_scores.get(crop, 50)
+            weather_score = weather_scores.get(crop, 10)
+            season_score = season_scores.get(crop, 7)
+            profit_score = profit_scores.get(crop, 5)
+            total = (ml_score*0.3 + local_score*0.25 + weather_score*0.2 + season_score*0.1 + profit_score*0.15)
+            avg_yield = parse_range(CROP_INFO[crop].get('expected_yield', '0'))
+            avg_price = parse_range(CROP_INFO[crop].get('market_price', '0'))
+            total_yield = avg_yield * area if area else 0
+            gross_revenue = total_yield * avg_price
+            estimated_profit = gross_revenue - costs if area and costs else None
+            crop_results.append({
+                'crop': crop,
+                'total_score': int(round(total)),
+                'breakdown': {
+                    'soil_score': ml_score,
+                    'local_score': local_score,
+                    'weather_score': weather_score,
+                    'season_score': season_score,
+                    'profit_score': profit_score
+                },
+                'estimated_profit': int(estimated_profit) if estimated_profit is not None else None,
+                'description': CROP_INFO[crop].get('description', ''),
+                'image': CROP_INFO[crop].get('image', 'crop.png')
+            })
+        # Sort and pick top 3
+        crop_results.sort(key=lambda x: x['total_score'], reverse=True)
+        top_crops = crop_results[:3]
+        return jsonify({'top_crops': top_crops})
+    except Exception as e:
+        return jsonify({'error': f'Error in recommendation: {str(e)}'})
+
 if __name__ == "__main__":
     app.run(debug=True)
