@@ -103,11 +103,80 @@
             margin-bottom: 2rem;
         }
         .region-highlight {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #155724;
+            font-weight: 500;
+        }
+        .weather-badge {
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .weather-badge:hover {
+            transform: translateY(-2px);
+        }
+        .weather-badge h6 {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .weather-badge h4 {
+            margin: 0;
+            font-weight: bold;
+        }
+        .auto-detection-section .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        .auto-detection-section .card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .manual-selection-section .card {
+            border-style: dashed;
+            background-color: #f8f9fa;
+        }
+        .weather-summary {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
             border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .crop-card .weather-conditions {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .crop-card .weather-conditions i {
+            margin-right: 2px;
+        }
+        .analysis-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+        }
+        .analysis-card h5 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .analysis-card h6 {
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .alert {
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-close {
+            opacity: 0.7;
+        }
+        .btn-close:hover {
+            opacity: 1;
         }
     </style>
 </head>
@@ -143,25 +212,101 @@
         Discover which crops are best suited for your state based on climate, soil, and regional conditions. Get personalized recommendations for optimal farming success!
     </p>
     
-    <!-- Location Selector -->
-    <div class="location-selector">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h4><i class="bi bi-search"></i> Select Your Location</h4>
-                <p class="mb-0">Choose your state and optionally a season for more accurate recommendations</p>
+    <!-- Auto Detection Section -->
+    <div class="auto-detection-section mb-4">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-geo-alt-fill"></i> Auto-Detect Your Location</h5>
             </div>
-            <div class="col-md-3">
-                <select id="stateSelect" class="form-select form-select-lg">
-                    <option value="">Select your state...</option>
-                </select>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <p class="mb-2">Get instant crop recommendations based on your current location and real-time weather conditions!</p>
+                        <small class="text-muted">We'll detect your location and current weather to provide the most accurate recommendations.</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button id="autoDetectBtn" class="btn btn-primary btn-lg">
+                            <i class="bi bi-location-arrow"></i> Auto Detect
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-3">
-                <select id="seasonSelect" class="form-select form-select-lg">
-                    <option value="">All seasons</option>
-                    <option value="kharif">Kharif (June-October)</option>
-                    <option value="rabi">Rabi (November-March)</option>
-                    <option value="zaid">Zaid (March-June)</option>
-                </select>
+        </div>
+    </div>
+
+    <!-- Auto Detection Results -->
+    <div id="autoDetectionResults" class="mb-4" style="display: none;">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle"></i> Auto-Detected Location & Weather</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-geo-alt"></i> Location Information</h6>
+                        <div id="locationInfo"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-cloud-sun"></i> Current Weather</h6>
+                        <div id="weatherInfo"></div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button id="getWeatherRecommendationsBtn" class="btn btn-success">
+                        <i class="bi bi-lightbulb"></i> Get Weather-Based Recommendations
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather-Based Recommendations -->
+    <div id="weatherRecommendations" style="display: none;">
+        <h3><i class="bi bi-cloud-sun"></i> Weather-Based Crop Recommendations</h3>
+        <p class="text-muted mb-4">Crops ranked by suitability considering your current weather conditions</p>
+        
+        <div class="weather-summary mb-3">
+            <div class="row" id="weatherSummary">
+                <!-- Weather summary will be populated here -->
+            </div>
+        </div>
+        
+        <div class="row" id="weatherCropsContainer">
+            <!-- Weather-based crop cards will be populated here -->
+        </div>
+    </div>
+    
+    <!-- Manual Selection Section -->
+    <div class="manual-selection-section">
+        <div class="card border-secondary">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Manual Selection</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Or manually select your state and season for traditional recommendations:</p>
+                
+                <!-- Location Selector -->
+                <div class="location-selector">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h4><i class="bi bi-search"></i> Select Your Location</h4>
+                            <p class="mb-0">Choose your state and optionally a season for more accurate recommendations</p>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="stateSelect" class="form-select form-select-lg">
+                                <option value="">Select your state...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="seasonSelect" class="form-select form-select-lg">
+                                <option value="">All seasons</option>
+                                <option value="kharif">Kharif (June-October)</option>
+                                <option value="rabi">Rabi (November-March)</option>
+                                <option value="zaid">Zaid (March-June)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -565,6 +710,7 @@ function showNoResults() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event listeners...');
     loadStates();
     
     document.getElementById('stateSelect').addEventListener('change', function() {
@@ -584,7 +730,312 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSuitabilityData(selectedState, selectedSeason);
         }
     });
+    
+    // Auto-detection event listeners
+    const autoDetectBtn = document.getElementById('autoDetectBtn');
+    const weatherRecommendationsBtn = document.getElementById('getWeatherRecommendationsBtn');
+    
+    console.log('Auto-detect button found:', autoDetectBtn);
+    console.log('Weather recommendations button found:', weatherRecommendationsBtn);
+    
+    if (autoDetectBtn) {
+        autoDetectBtn.addEventListener('click', autoDetectLocation);
+        console.log('Auto-detect event listener added successfully');
+    } else {
+        console.error('Auto-detect button not found!');
+    }
+    
+    if (weatherRecommendationsBtn) {
+        weatherRecommendationsBtn.addEventListener('click', getWeatherBasedRecommendations);
+        console.log('Weather recommendations event listener added successfully');
+    } else {
+        console.error('Weather recommendations button not found!');
+    }
 });
+
+// Auto-detection functions
+async function autoDetectLocation() {
+    console.log('Auto-detect button clicked!');
+    const btn = document.getElementById('autoDetectBtn');
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Detecting...';
+    btn.disabled = true;
+    
+    try {
+        console.log('Making API request to /api/auto-detect...');
+        const response = await fetch('/api/auto-detect');
+        console.log('API response received:', response);
+        const data = await response.json();
+        console.log('API data:', data);
+        
+        if (response.ok) {
+            console.log('Auto-detection successful, displaying results...');
+            displayAutoDetectionResults(data);
+            document.getElementById('autoDetectionResults').style.display = 'block';
+        } else {
+            console.log('Auto-detection failed:', data.error);
+            showAlert('Could not detect your location automatically. Please use manual selection.', 'warning');
+        }
+    } catch (error) {
+        console.error('Error in auto-detection:', error);
+        showAlert('Auto-detection failed. Please use manual selection.', 'danger');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+function displayAutoDetectionResults(data) {
+    const locationInfo = document.getElementById('locationInfo');
+    const weatherInfo = document.getElementById('weatherInfo');
+    
+    // Display location information
+    locationInfo.innerHTML = `
+        <p><strong>City:</strong> ${data.location.city || 'Unknown'}</p>
+        <p><strong>Region:</strong> ${data.location.region || 'Unknown'}</p>
+        <p><strong>Country:</strong> ${data.location.country || 'Unknown'}</p>
+        <p><strong>Nearest Indian State:</strong> ${data.nearest_state}</p>
+        <p><strong>Distance:</strong> ${data.distance_km.toFixed(1)} km</p>
+    `;
+    
+    // Display weather information
+    if (data.weather) {
+        weatherInfo.innerHTML = `
+            <p><strong>Temperature:</strong> ${data.weather.temperature}°C</p>
+            <p><strong>Humidity:</strong> ${data.weather.humidity}%</p>
+            <p><strong>Weather:</strong> ${data.weather.description}</p>
+            <p><strong>Wind Speed:</strong> ${data.weather.wind_speed} m/s</p>
+            <p><strong>Pressure:</strong> ${data.weather.pressure} hPa</p>
+        `;
+    } else {
+        weatherInfo.innerHTML = '<p class="text-muted">Weather data not available</p>';
+    }
+}
+
+async function getWeatherBasedRecommendations() {
+    const btn = document.getElementById('getWeatherRecommendationsBtn');
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Analyzing...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/weather-based-recommendations');
+        const data = await response.json();
+        
+        if (response.ok) {
+            displayWeatherRecommendations(data);
+            document.getElementById('weatherRecommendations').style.display = 'block';
+        } else {
+            showAlert('Could not get weather-based recommendations.', 'warning');
+        }
+    } catch (error) {
+        console.error('Error getting weather recommendations:', error);
+        showAlert('Failed to get weather-based recommendations.', 'danger');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+function displayWeatherRecommendations(data) {
+    const weatherSummary = document.getElementById('weatherSummary');
+    const cropsContainer = document.getElementById('weatherCropsContainer');
+    
+    // Display weather summary
+    weatherSummary.innerHTML = `
+        <div class="col-md-3">
+            <div class="weather-badge bg-primary text-white p-3 rounded">
+                <h6><i class="bi bi-thermometer-half"></i> Temperature</h6>
+                <h4>${data.weather_summary.temperature}</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="weather-badge bg-info text-white p-3 rounded">
+                <h6><i class="bi bi-droplet"></i> Humidity</h6>
+                <h4>${data.weather_summary.humidity}</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="weather-badge bg-success text-white p-3 rounded">
+                <h6><i class="bi bi-geo-alt"></i> Nearest State</h6>
+                <h4>${data.weather_summary.nearest_state}</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="weather-badge bg-warning text-white p-3 rounded">
+                <h6><i class="bi bi-cloud-sun"></i> Weather</h6>
+                <h4>${data.weather_summary.description}</h4>
+            </div>
+        </div>
+    `;
+    
+    // Display weather-adjusted crop recommendations
+    cropsContainer.innerHTML = data.recommendations.map(crop => `
+        <div class="col-md-6 col-lg-4">
+            <div class="crop-card card" onclick="showWeatherDetailedAnalysis('${crop.crop_name}', '${data.weather_summary.nearest_state}')">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-4">
+                            <img src="/static/images/${crop.image}" alt="${crop.crop_name}" class="crop-image">
+                        </div>
+                        <div class="col-8">
+                            <h5 class="card-title">${crop.crop_name}</h5>
+                            <div class="suitability-score ${getScoreClass(crop.weather_adjusted_score)}">
+                                ${crop.weather_adjusted_score}% - ${getScoreLabel(crop.weather_adjusted_score)}
+                            </div>
+                            <small class="text-muted">${crop.growing_season}</small>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="progress progress-custom">
+                            <div class="progress-bar bg-success" style="width: ${crop.weather_adjusted_score}%"></div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-thermometer-half"></i> ${crop.weather_conditions.current_temp}°C | 
+                            <i class="bi bi-droplet"></i> ${crop.weather_conditions.current_humidity}%
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function showWeatherDetailedAnalysis(cropName, stateName) {
+    const modal = new bootstrap.Modal(document.getElementById('analysisModal'));
+    const modalTitle = document.getElementById('analysisModalTitle');
+    const modalBody = document.getElementById('analysisModalBody');
+    
+    modalTitle.textContent = `${cropName} - Weather-Based Analysis for ${stateName}`;
+    modalBody.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading weather-based analysis...</p></div>';
+    
+    modal.show();
+    
+    try {
+        const response = await fetch(`/api/suitability/crop/${cropName}/${stateName}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            modalBody.innerHTML = createWeatherDetailedAnalysisHTML(data);
+        } else {
+            modalBody.innerHTML = '<div class="alert alert-danger">Error loading weather-based analysis</div>';
+        }
+    } catch (error) {
+        modalBody.innerHTML = '<div class="alert alert-danger">Error loading weather-based analysis</div>';
+        console.error('Error:', error);
+    }
+}
+
+function createWeatherDetailedAnalysisHTML(data) {
+    const analysis = data.suitability_analysis;
+    
+    return `
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <img src="/static/images/${data.image}" alt="${data.crop_name}" class="crop-image mb-3">
+                <h4>${data.crop_name}</h4>
+                <div class="suitability-score ${getScoreClass(analysis.suitability_score)}">
+                    ${analysis.suitability_score}% Suitability
+                </div>
+                <p class="text-muted">${getScoreLabel(analysis.suitability_score)} Match</p>
+                
+                <div class="analysis-card mt-3">
+                    <h6><i class="bi bi-info-circle"></i> Quick Facts</h6>
+                    <p><strong>Growing Season:</strong> ${data.growing_season}</p>
+                    <p><strong>Water Needs:</strong> ${data.water_requirements}</p>
+                    <p><strong>Expected Yield:</strong> ${data.expected_yield}</p>
+                    <p><strong>Market Price:</strong> ${data.market_price}</p>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="analysis-card">
+                    <h5><i class="bi bi-thermometer-half"></i> Climate Compatibility</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between">
+                                <span>Temperature:</span>
+                                <span class="badge bg-${analysis.climate_compatibility.temperature >= 7 ? 'success' : analysis.climate_compatibility.temperature >= 5 ? 'warning' : 'danger'}">${analysis.climate_compatibility.temperature}/10</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between">
+                                <span>Humidity:</span>
+                                <span class="badge bg-${analysis.climate_compatibility.humidity >= 7 ? 'success' : analysis.climate_compatibility.humidity >= 5 ? 'warning' : 'danger'}">${analysis.climate_compatibility.humidity}/10</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between">
+                                <span>Rainfall:</span>
+                                <span class="badge bg-${analysis.climate_compatibility.rainfall >= 7 ? 'success' : analysis.climate_compatibility.rainfall >= 5 ? 'warning' : 'danger'}">${analysis.climate_compatibility.rainfall}/10</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between">
+                                <span>Sunlight:</span>
+                                <span class="badge bg-${analysis.climate_compatibility.sunlight >= 7 ? 'success' : analysis.climate_compatibility.sunlight >= 5 ? 'warning' : 'danger'}">${analysis.climate_compatibility.sunlight}/10</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <h5><i class="bi bi-layers"></i> Soil Compatibility</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>pH Range:</strong> ${analysis.soil_compatibility.ph_range}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Drainage:</strong> ${analysis.soil_compatibility.drainage}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Fertility:</strong> ${analysis.soil_compatibility.fertility}
+                        </div>
+                    </div>
+                </div>
+                
+                ${analysis.regional_preference ? 
+                    '<div class="region-highlight"><i class="bi bi-check-circle"></i> This crop is commonly grown in your state!</div>' : 
+                    '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> This crop is not commonly grown in your state</div>'
+                }
+                
+                <div class="analysis-card">
+                    <h5><i class="bi bi-lightbulb"></i> Recommendations</h5>
+                    <ul>
+                        ${analysis.recommendations ? analysis.recommendations.map(rec => `<li>${rec}</li>`).join('') : '<li>Follow standard best practices for this crop.</li>'}
+                    </ul>
+                </div>
+                
+                <div class="analysis-card">
+                    <h5><i class="bi bi-info-circle"></i> Crop Description</h5>
+                    <p>${data.description}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
 </script>
 </body>
 </html> 

@@ -7,6 +7,8 @@ from werkzeug.exceptions import BadRequest
 import warnings
 import re
 import datetime
+import requests
+import json
 from utils import validate_input, parse_range
 from data_loader import CROP_INFO, get_climate_suitability, get_soil_ph_range, get_soil_drainage, get_soil_fertility, get_investment_score, get_yield_score, get_market_price_score, get_profit_margin_score
 
@@ -199,6 +201,16 @@ INDIAN_STATES = {
         "avg_temp": {"min": 18, "max": 32}, "rainfall_mm": 1800, "humidity": "high",
         "sunlight_hours": 7.0, "altitude": "low", "districts": ["Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur", "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram", "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia", "North 24 Parganas", "Paschim Bardhaman", "Paschim Medinipur", "Purba Bardhaman", "Purba Medinipur", "Purulia", "South 24 Parganas", "Uttar Dinajpur"]
     }
+}
+
+# Weather API configuration (using OpenWeatherMap - free tier)
+WEATHER_API_KEY = "demo_key"  # Replace with actual API key for production
+WEATHER_BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
+
+# Location detection services
+LOCATION_SERVICES = {
+    "ipapi": "http://ip-api.com/json/",
+    "ipinfo": "https://ipinfo.io/json"
 }
 
 def get_current_season():
@@ -784,6 +796,352 @@ def get_suitable_crops_for_location(state_name, limit=10):
     # Sort by suitability score (descending) and return top results
     crop_scores.sort(key=lambda x: x['suitability_score'], reverse=True)
     return crop_scores[:limit]
+
+def get_user_location_from_ip():
+    """Get user's approximate location from IP address."""
+    try:
+        print("Attempting to get location from IP...")
+        # Try multiple location services for better accuracy
+        response = requests.get(LOCATION_SERVICES["ipapi"], timeout=5)
+        print(f"Location API response status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Location API data: {data}")
+            
+            if data.get('status') == 'success':
+                location_data = {
+                    'city': data.get('city', ''),
+                    'region': data.get('regionName', ''),
+                    'country': data.get('country', ''),
+                    'lat': data.get('lat', 0),
+                    'lon': data.get('lon', 0),
+                    'timezone': data.get('timezone', '')
+                }
+                print(f"Location detected: {location_data}")
+                return location_data
+            else:
+                print(f"Location API returned status: {data.get('status')}")
+        else:
+            print(f"Location API failed with status: {response.status_code}")
+    except Exception as e:
+        print(f"Error getting location from IP: {e}")
+    
+    return None
+
+def get_weather_data(lat, lon):
+    """Get current weather data for given coordinates."""
+    try:
+        params = {
+            'lat': lat,
+            'lon': lon,
+            'appid': WEATHER_API_KEY,
+            'units': 'metric'  # Use Celsius
+        }
+        response = requests.get(WEATHER_BASE_URL, params=params, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'temperature': data['main']['temp'],
+                'humidity': data['main']['humidity'],
+                'pressure': data['main']['pressure'],
+                'description': data['weather'][0]['description'],
+                'wind_speed': data['wind']['speed'],
+                'visibility': data.get('visibility', 10000),
+                'clouds': data['clouds']['all'],
+                'sunrise': data['sys']['sunrise'],
+                'sunset': data['sys']['sunset']
+            }
+    except Exception as e:
+        print(f"Error getting weather data: {e}")
+    
+    return None
+
+def get_weather_forecast(lat, lon):
+    """Get 5-day weather forecast."""
+    try:
+        forecast_url = "http://api.openweathermap.org/data/2.5/forecast"
+        params = {
+            'lat': lat,
+            'lon': lon,
+            'appid': WEATHER_API_KEY,
+            'units': 'metric'
+        }
+        response = requests.get(forecast_url, params=params, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return data['list'][:5]  # Return next 5 days
+    except Exception as e:
+        print(f"Error getting weather forecast: {e}")
+    
+    return None
+
+def map_weather_to_climate_zone(weather_data):
+    """Map current weather conditions to climate zones."""
+    if not weather_data:
+        return 'moderate'
+    
+    temp = weather_data['temperature']
+    humidity = weather_data['humidity']
+    
+    # Temperature-based classification
+    if temp >= 30:
+        temp_zone = 'hot'
+    elif temp >= 20:
+        temp_zone = 'moderate'
+    elif temp >= 10:
+        temp_zone = 'cool'
+    else:
+        temp_zone = 'cold'
+    
+    # Humidity-based classification
+    if humidity >= 80:
+        humidity_level = 'very_high'
+    elif humidity >= 60:
+        humidity_level = 'high'
+    elif humidity >= 40:
+        humidity_level = 'moderate'
+    else:
+        humidity_level = 'low'
+    
+    return {
+        'temperature_zone': temp_zone,
+        'humidity_level': humidity_level,
+        'current_temp': temp,
+        'current_humidity': humidity
+    }
+
+def find_nearest_state(lat, lon):
+    """Find the nearest Indian state based on coordinates."""
+    # Approximate coordinates of Indian states (simplified)
+    state_coordinates = {
+        "Andhra Pradesh": (15.9129, 79.7400),
+        "Arunachal Pradesh": (28.2180, 94.7278),
+        "Assam": (26.2006, 92.9376),
+        "Bihar": (25.0961, 85.3131),
+        "Chhattisgarh": (21.2787, 81.8661),
+        "Goa": (15.2993, 74.1240),
+        "Gujarat": (22.2587, 71.1924),
+        "Haryana": (29.0588, 76.0856),
+        "Himachal Pradesh": (31.1048, 77.1734),
+        "Jharkhand": (23.6102, 85.2799),
+        "Karnataka": (15.3173, 75.7139),
+        "Kerala": (10.8505, 76.2711),
+        "Madhya Pradesh": (23.5937, 78.9629),
+        "Maharashtra": (19.7515, 75.7139),
+        "Manipur": (24.6637, 93.9063),
+        "Meghalaya": (25.4670, 91.3662),
+        "Mizoram": (23.1645, 92.9376),
+        "Nagaland": (26.1584, 94.5624),
+        "Odisha": (20.9517, 85.0985),
+        "Punjab": (31.1471, 75.3412),
+        "Rajasthan": (27.0238, 74.2179),
+        "Sikkim": (27.5330, 88.5122),
+        "Tamil Nadu": (11.1271, 78.6569),
+        "Telangana": (18.1124, 79.0193),
+        "Tripura": (23.9408, 91.9882),
+        "Uttar Pradesh": (26.8467, 80.9462),
+        "Uttarakhand": (30.0668, 79.0193),
+        "West Bengal": (22.9868, 87.8550)
+    }
+    
+    min_distance = float('inf')
+    nearest_state = None
+    
+    for state, (state_lat, state_lon) in state_coordinates.items():
+        # Calculate distance using Haversine formula
+        distance = calculate_distance(lat, lon, state_lat, state_lon)
+        if distance < min_distance:
+            min_distance = distance
+            nearest_state = state
+    
+    return nearest_state, min_distance
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Calculate distance between two coordinates using Haversine formula."""
+    import math
+    
+    R = 6371  # Earth's radius in kilometers
+    
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    
+    return R * c
+
+def get_auto_location_data():
+    """Get user's location and weather data automatically."""
+    try:
+        # Get location from IP
+        location_data = get_user_location_from_ip()
+        if not location_data:
+            return None
+        
+        # Get weather data (with fallback)
+        weather_data = get_weather_data(location_data['lat'], location_data['lon'])
+        
+        # Find nearest Indian state
+        nearest_state, distance = find_nearest_state(location_data['lat'], location_data['lon'])
+        
+        # Map weather to climate zone (with fallback)
+        climate_zone = map_weather_to_climate_zone(weather_data) if weather_data else {
+            'temperature_zone': 'moderate',
+            'humidity_level': 'moderate',
+            'current_temp': 25,  # Default temperature
+            'current_humidity': 60  # Default humidity
+        }
+        
+        return {
+            'location': location_data,
+            'weather': weather_data,
+            'nearest_state': nearest_state,
+            'distance_km': distance,
+            'climate_zone': climate_zone
+        }
+    except Exception as e:
+        print(f"Error in auto location detection: {e}")
+        return None
+
+@app.route('/api/auto-detect')
+def auto_detect_location():
+    """Automatically detect user's location and get weather data."""
+    try:
+        print("Auto-detection requested...")
+        auto_data = get_auto_location_data()
+        if not auto_data:
+            print("Auto-detection failed - no data returned")
+            return jsonify({"error": "Could not detect location automatically"}), 400
+        
+        print(f"Auto-detection successful: {auto_data['nearest_state']}")
+        return jsonify(auto_data)
+    except Exception as e:
+        print(f"Auto-detection error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/weather-based-recommendations')
+def get_weather_based_recommendations():
+    """Get crop recommendations based on current weather conditions."""
+    try:
+        # Get auto-detected data
+        auto_data = get_auto_location_data()
+        if not auto_data:
+            return jsonify({"error": "Could not detect location automatically"}), 400
+        
+        weather_data = auto_data['weather']
+        nearest_state = auto_data['nearest_state']
+        climate_zone = auto_data['climate_zone']
+        
+        if not nearest_state:
+            return jsonify({"error": "Could not determine nearest state"}), 400
+        
+        # Get base recommendations for the nearest state
+        base_recommendations = get_suitable_crops_for_location(nearest_state, limit=20)
+        
+        # Adjust scores based on current weather (or use base scores if weather not available)
+        weather_adjusted_recommendations = []
+        for crop in base_recommendations:
+            if weather_data:
+                adjusted_score = adjust_score_for_weather(crop['crop_name'], weather_data, climate_zone)
+            else:
+                # Use base suitability score if weather data not available
+                adjusted_score = crop['suitability_score']
+            
+            crop['weather_adjusted_score'] = adjusted_score
+            crop['weather_conditions'] = {
+                'current_temp': climate_zone['current_temp'],
+                'current_humidity': climate_zone['current_humidity'],
+                'weather_description': weather_data['description'] if weather_data else 'Weather data not available',
+                'climate_zone': climate_zone
+            }
+            weather_adjusted_recommendations.append(crop)
+        
+        # Sort by weather-adjusted score
+        weather_adjusted_recommendations.sort(key=lambda x: x['weather_adjusted_score'], reverse=True)
+        
+        return jsonify({
+            'auto_detected_data': auto_data,
+            'recommendations': weather_adjusted_recommendations[:15],
+            'weather_summary': {
+                'temperature': f"{climate_zone['current_temp']}°C",
+                'humidity': f"{climate_zone['current_humidity']}%",
+                'description': weather_data['description'] if weather_data else 'Weather data not available',
+                'nearest_state': nearest_state,
+                'distance_km': round(auto_data['distance_km'], 1)
+            }
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def adjust_score_for_weather(crop_name, weather_data, climate_zone):
+    """Adjust crop suitability score based on current weather conditions."""
+    base_score = 50  # Start with base score
+    
+    temp = weather_data['temperature']
+    humidity = weather_data['humidity']
+    
+    # Get crop's climate preferences
+    temp_suitability = get_climate_suitability(crop_name, 'temperature')
+    humidity_suitability = get_climate_suitability(crop_name, 'humidity')
+    
+    # Temperature adjustment
+    if temp_suitability >= 8:  # Crop prefers high temperature
+        if temp >= 25:
+            base_score += 20
+        elif temp >= 20:
+            base_score += 10
+        else:
+            base_score -= 10
+    elif temp_suitability <= 5:  # Crop prefers cool temperature
+        if temp <= 20:
+            base_score += 20
+        elif temp <= 25:
+            base_score += 10
+        else:
+            base_score -= 10
+    else:  # Moderate temperature preference
+        if 15 <= temp <= 30:
+            base_score += 15
+        else:
+            base_score -= 5
+    
+    # Humidity adjustment
+    if humidity_suitability >= 8:  # Crop prefers high humidity
+        if humidity >= 70:
+            base_score += 15
+        elif humidity >= 50:
+            base_score += 5
+        else:
+            base_score -= 10
+    elif humidity_suitability <= 5:  # Crop prefers low humidity
+        if humidity <= 50:
+            base_score += 15
+        elif humidity <= 70:
+            base_score += 5
+        else:
+            base_score -= 10
+    else:  # Moderate humidity preference
+        if 40 <= humidity <= 80:
+            base_score += 10
+        else:
+            base_score -= 5
+    
+    # Weather description adjustment
+    weather_desc = weather_data['description'].lower()
+    if 'rain' in weather_desc or 'drizzle' in weather_desc:
+        # Good for most crops
+        base_score += 10
+    elif 'clear' in weather_desc or 'sunny' in weather_desc:
+        # Good for sun-loving crops
+        if get_climate_suitability(crop_name, 'sunlight') >= 7:
+            base_score += 10
+    elif 'cloudy' in weather_desc:
+        # Moderate for most crops
+        base_score += 5
+    
+    return max(0, min(100, base_score))  # Ensure score is between 0-100
 
 if __name__ == "__main__":
     app.run(debug=True)
