@@ -57,6 +57,150 @@ MONTHS = {
     9: "September", 10: "October", 11: "November", 12: "December"
 } 
 
+# Indian states and their detailed climate zones
+INDIAN_STATES = {
+    "Andhra Pradesh": {
+        "climate": "tropical", "rainfall": "moderate", "temperature": "hot", "soil": "red_soil",
+        "avg_temp": {"min": 20, "max": 35}, "rainfall_mm": 900, "humidity": "moderate",
+        "sunlight_hours": 8.5, "altitude": "low", "districts": ["Anantapur", "Chittoor", "East Godavari", "Guntur", "Krishna", "Kurnool", "Prakasam", "Srikakulam", "Visakhapatnam", "Vizianagaram", "West Godavari", "YSR Kadapa"]
+    },
+    "Arunachal Pradesh": {
+        "climate": "sub_tropical", "rainfall": "high", "temperature": "moderate", "soil": "mountainous",
+        "avg_temp": {"min": 10, "max": 25}, "rainfall_mm": 2800, "humidity": "high",
+        "sunlight_hours": 6.5, "altitude": "high", "districts": ["Anjaw", "Changlang", "Dibang Valley", "East Kameng", "East Siang", "Kurung Kumey", "Lohit", "Lower Dibang Valley", "Lower Subansiri", "Papum Pare", "Tawang", "Tirap", "Upper Siang", "Upper Subansiri", "West Kameng", "West Siang"]
+    },
+    "Assam": {
+        "climate": "tropical", "rainfall": "very_high", "temperature": "moderate", "soil": "alluvial",
+        "avg_temp": {"min": 15, "max": 30}, "rainfall_mm": 2800, "humidity": "very_high",
+        "sunlight_hours": 6.0, "altitude": "low", "districts": ["Baksa", "Barpeta", "Biswanath", "Bongaigaon", "Cachar", "Charaideo", "Chirang", "Darrang", "Dhemaji", "Dhubri", "Dibrugarh", "Dima Hasao", "Goalpara", "Golaghat", "Hailakandi", "Hojai", "Jorhat", "Kamrup", "Kamrup Metropolitan", "Karbi Anglong", "Karimganj", "Kokrajhar", "Lakhimpur", "Majuli", "Morigaon", "Nagaon", "Nalbari", "Sivasagar", "Sonitpur", "South Salmara-Mankachar", "Tinsukia", "Udalguri", "West Karbi Anglong"]
+    },
+    "Bihar": {
+        "climate": "sub_tropical", "rainfall": "moderate", "temperature": "hot", "soil": "alluvial",
+        "avg_temp": {"min": 18, "max": 32}, "rainfall_mm": 1200, "humidity": "moderate",
+        "sunlight_hours": 7.5, "altitude": "low", "districts": ["Araria", "Arwal", "Aurangabad", "Banka", "Begusarai", "Bhagalpur", "Bhojpur", "Buxar", "Darbhanga", "East Champaran", "Gaya", "Gopalganj", "Jamui", "Jehanabad", "Kaimur", "Katihar", "Khagaria", "Kishanganj", "Lakhisarai", "Madhepura", "Madhubani", "Munger", "Muzaffarpur", "Nalanda", "Nawada", "Patna", "Purnia", "Rohtas", "Saharsa", "Samastipur", "Saran", "Sheikhpura", "Sheohar", "Sitamarhi", "Siwan", "Supaul", "Vaishali", "West Champaran"]
+    },
+    "Chhattisgarh": {
+        "climate": "tropical", "rainfall": "moderate", "temperature": "hot", "soil": "red_soil",
+        "avg_temp": {"min": 20, "max": 35}, "rainfall_mm": 1400, "humidity": "moderate",
+        "sunlight_hours": 8.0, "altitude": "medium", "districts": ["Balod", "Baloda Bazar", "Balrampur", "Bastar", "Bemetara", "Bijapur", "Bilaspur", "Dantewada", "Dhamtari", "Durg", "Gariaband", "Janjgir-Champa", "Jashpur", "Kabirdham", "Kanker", "Kondagaon", "Korba", "Koriya", "Mahasamund", "Mungeli", "Narayanpur", "Raigarh", "Raipur", "Rajnandgaon", "Sukma", "Surajpur", "Surguja"]
+    },
+    "Goa": {
+        "climate": "tropical", "rainfall": "high", "temperature": "moderate", "soil": "laterite",
+        "avg_temp": {"min": 22, "max": 30}, "rainfall_mm": 3000, "humidity": "high",
+        "sunlight_hours": 7.0, "altitude": "low", "districts": ["North Goa", "South Goa"]
+    },
+    "Gujarat": {
+        "climate": "arid", "rainfall": "low", "temperature": "hot", "soil": "black_soil",
+        "avg_temp": {"min": 22, "max": 38}, "rainfall_mm": 800, "humidity": "low",
+        "sunlight_hours": 9.0, "altitude": "low", "districts": ["Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar", "Botad", "Chhota Udaipur", "Dahod", "Dang", "Devbhoomi Dwarka", "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kheda", "Kutch", "Mahisagar", "Mehsana", "Morbi", "Narmada", "Navsari", "Panchmahal", "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat", "Surendranagar", "Tapi", "Vadodara", "Valsad"]
+    },
+    "Haryana": {
+        "climate": "sub_tropical", "rainfall": "low", "temperature": "hot", "soil": "alluvial",
+        "avg_temp": {"min": 20, "max": 35}, "rainfall_mm": 600, "humidity": "low",
+        "sunlight_hours": 8.5, "altitude": "low", "districts": ["Ambala", "Bhiwani", "Charkhi Dadri", "Faridabad", "Fatehabad", "Gurugram", "Hisar", "Jhajjar", "Jind", "Kaithal", "Karnal", "Kurukshetra", "Mahendragarh", "Nuh", "Palwal", "Panchkula", "Panipat", "Rewari", "Rohtak", "Sirsa", "Sonipat", "Yamunanagar"]
+    },
+    "Himachal Pradesh": {
+        "climate": "temperate", "rainfall": "moderate", "temperature": "cool", "soil": "mountainous",
+        "avg_temp": {"min": 5, "max": 25}, "rainfall_mm": 1500, "humidity": "moderate",
+        "sunlight_hours": 7.0, "altitude": "high", "districts": ["Bilaspur", "Chamba", "Hamirpur", "Kangra", "Kinnaur", "Kullu", "Lahaul and Spiti", "Mandi", "Shimla", "Sirmaur", "Solan", "Una"]
+    },
+    "Jharkhand": {
+        "climate": "sub_tropical", "rainfall": "moderate", "temperature": "hot", "soil": "red_soil",
+        "avg_temp": {"min": 18, "max": 32}, "rainfall_mm": 1200, "humidity": "moderate",
+        "sunlight_hours": 7.5, "altitude": "medium", "districts": ["Bokaro", "Chatra", "Deoghar", "Dhanbad", "Dumka", "East Singhbhum", "Garhwa", "Giridih", "Godda", "Gumla", "Hazaribagh", "Jamtara", "Khunti", "Koderma", "Latehar", "Lohardaga", "Pakur", "Palamu", "Ramgarh", "Ranchi", "Sahebganj", "Seraikela Kharsawan", "Simdega", "West Singhbhum"]
+    },
+    "Karnataka": {
+        "climate": "tropical", "rainfall": "moderate", "temperature": "moderate", "soil": "red_soil",
+        "avg_temp": {"min": 18, "max": 32}, "rainfall_mm": 1100, "humidity": "moderate",
+        "sunlight_hours": 8.0, "altitude": "medium", "districts": ["Bagalkot", "Ballari", "Belagavi", "Bengaluru Rural", "Bengaluru Urban", "Bidar", "Chamarajanagar", "Chikballapur", "Chikkamagaluru", "Chitradurga", "Dakshina Kannada", "Davanagere", "Dharwad", "Gadag", "Hassan", "Haveri", "Kalaburagi", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysuru", "Raichur", "Ramanagara", "Shivamogga", "Tumakuru", "Udupi", "Uttara Kannada", "Vijayapura", "Yadgir"]
+    },
+    "Kerala": {
+        "climate": "tropical", "rainfall": "very_high", "temperature": "moderate", "soil": "laterite",
+        "avg_temp": {"min": 22, "max": 30}, "rainfall_mm": 3000, "humidity": "very_high",
+        "sunlight_hours": 6.5, "altitude": "low", "districts": ["Alappuzha", "Ernakulam", "Idukki", "Kannur", "Kasaragod", "Kollam", "Kottayam", "Kozhikode", "Malappuram", "Palakkad", "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad"]
+    },
+    "Madhya Pradesh": {
+        "climate": "sub_tropical", "rainfall": "moderate", "temperature": "hot", "soil": "black_soil",
+        "avg_temp": {"min": 20, "max": 35}, "rainfall_mm": 1200, "humidity": "moderate",
+        "sunlight_hours": 8.0, "altitude": "medium", "districts": ["Agar Malwa", "Alirajpur", "Anuppur", "Ashoknagar", "Balaghat", "Barwani", "Betul", "Bhind", "Bhopal", "Burhanpur", "Chhatarpur", "Chhindwara", "Damoh", "Datia", "Dewas", "Dhar", "Dindori", "Guna", "Gwalior", "Harda", "Hoshangabad", "Indore", "Jabalpur", "Jhabua", "Katni", "Khandwa", "Khargone", "Mandla", "Mandsaur", "Morena", "Narsinghpur", "Neemuch", "Panna", "Raisen", "Rajgarh", "Ratlam", "Rewa", "Sagar", "Satna", "Sehore", "Seoni", "Shahdol", "Shajapur", "Sheopur", "Shivpuri", "Sidhi", "Singrauli", "Tikamgarh", "Ujjain", "Umaria", "Vidisha"]
+    },
+    "Maharashtra": {
+        "climate": "tropical", "rainfall": "moderate", "temperature": "hot", "soil": "black_soil",
+        "avg_temp": {"min": 20, "max": 35}, "rainfall_mm": 1200, "humidity": "moderate",
+        "sunlight_hours": 8.0, "altitude": "medium", "districts": ["Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal"]
+    },
+    "Manipur": {
+        "climate": "sub_tropical", "rainfall": "high", "temperature": "moderate", "soil": "mountainous",
+        "avg_temp": {"min": 15, "max": 28}, "rainfall_mm": 2000, "humidity": "high",
+        "sunlight_hours": 6.5, "altitude": "high", "districts": ["Bishnupur", "Chandel", "Churachandpur", "Imphal East", "Imphal West", "Jiribam", "Kakching", "Kamjong", "Kangpokpi", "Noney", "Pherzawl", "Senapati", "Tamenglong", "Tengnoupal", "Thoubal", "Ukhrul"]
+    },
+    "Meghalaya": {
+        "climate": "sub_tropical", "rainfall": "very_high", "temperature": "moderate", "soil": "mountainous",
+        "avg_temp": {"min": 15, "max": 28}, "rainfall_mm": 3000, "humidity": "very_high",
+        "sunlight_hours": 6.0, "altitude": "high", "districts": ["East Garo Hills", "East Jaintia Hills", "East Khasi Hills", "North Garo Hills", "Ri Bhoi", "South Garo Hills", "South West Garo Hills", "South West Khasi Hills", "West Garo Hills", "West Jaintia Hills", "West Khasi Hills"]
+    },
+    "Mizoram": {
+        "climate": "sub_tropical", "rainfall": "high", "temperature": "moderate", "soil": "mountainous",
+        "avg_temp": {"min": 15, "max": 28}, "rainfall_mm": 2500, "humidity": "high",
+        "sunlight_hours": 6.5, "altitude": "high", "districts": ["Aizawl", "Champhai", "Hnahthial", "Khawzawl", "Kolasib", "Lawngtlai", "Lunglei", "Mamit", "Saiha", "Saitual", "Serchhip"]
+    },
+    "Nagaland": {
+        "climate": "sub_tropical", "rainfall": "high", "temperature": "moderate", "soil": "mountainous",
+        "avg_temp": {"min": 15, "max": 28}, "rainfall_mm": 2000, "humidity": "high",
+        "sunlight_hours": 6.5, "altitude": "high", "districts": ["Dimapur", "Kiphire", "Kohima", "Longleng", "Mokokchung", "Mon", "Peren", "Phek", "Tuensang", "Wokha", "Zunheboto"]
+    },
+    "Odisha": {
+        "climate": "tropical", "rainfall": "high", "temperature": "hot", "soil": "red_soil",
+        "avg_temp": {"min": 20, "max": 35}, "rainfall_mm": 1500, "humidity": "high",
+        "sunlight_hours": 7.5, "altitude": "low", "districts": ["Angul", "Balangir", "Balasore", "Bargarh", "Bhadrak", "Bhubaneswar", "Boudh", "Cuttack", "Deogarh", "Dhenkanal", "Gajapati", "Ganjam", "Jagatsinghpur", "Jajpur", "Jharsuguda", "Kalahandi", "Kandhamal", "Kendrapara", "Kendujhar", "Khordha", "Koraput", "Malkangiri", "Mayurbhanj", "Nabarangpur", "Nayagarh", "Nuapada", "Puri", "Rayagada", "Sambalpur", "Subarnapur", "Sundargarh"]
+    },
+    "Punjab": {
+        "climate": "sub_tropical", "rainfall": "low", "temperature": "hot", "soil": "alluvial",
+        "avg_temp": {"min": 18, "max": 35}, "rainfall_mm": 600, "humidity": "low",
+        "sunlight_hours": 8.5, "altitude": "low", "districts": ["Amritsar", "Barnala", "Bathinda", "Faridkot", "Fatehgarh Sahib", "Fazilka", "Ferozepur", "Gurdaspur", "Hoshiarpur", "Jalandhar", "Kapurthala", "Ludhiana", "Mansa", "Moga", "Muktsar", "Pathankot", "Patiala", "Rupnagar", "Sahibzada Ajit Singh Nagar", "Sangrur", "Shahid Bhagat Singh Nagar", "Tarn Taran"]
+    },
+    "Rajasthan": {
+        "climate": "arid", "rainfall": "very_low", "temperature": "very_hot", "soil": "desert",
+        "avg_temp": {"min": 25, "max": 40}, "rainfall_mm": 400, "humidity": "very_low",
+        "sunlight_hours": 9.5, "altitude": "low", "districts": ["Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner", "Bundi", "Chittorgarh", "Churu", "Dausa", "Dholpur", "Dungarpur", "Hanumangarh", "Jaipur", "Jaisalmer", "Jalore", "Jhalawar", "Jhunjhunu", "Jodhpur", "Karauli", "Kota", "Nagaur", "Pali", "Pratapgarh", "Rajsamand", "Sawai Madhopur", "Sikar", "Sirohi", "Sri Ganganagar", "Tonk", "Udaipur"]
+    },
+    "Sikkim": {
+        "climate": "temperate", "rainfall": "high", "temperature": "cool", "soil": "mountainous",
+        "avg_temp": {"min": 5, "max": 20}, "rainfall_mm": 2500, "humidity": "high",
+        "sunlight_hours": 6.0, "altitude": "high", "districts": ["East Sikkim", "North Sikkim", "South Sikkim", "West Sikkim"]
+    },
+    "Tamil Nadu": {
+        "climate": "tropical", "rainfall": "moderate", "temperature": "hot", "soil": "red_soil",
+        "avg_temp": {"min": 22, "max": 35}, "rainfall_mm": 1000, "humidity": "moderate",
+        "sunlight_hours": 8.0, "altitude": "low", "districts": ["Ariyalur", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Salem", "Sivaganga", "Thanjavur", "Theni", "Thoothukkudi", "Tiruchirappalli", "Tirunelveli", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"]
+    },
+    "Telangana": {
+        "climate": "tropical", "rainfall": "moderate", "temperature": "hot", "soil": "red_soil",
+        "avg_temp": {"min": 20, "max": 35}, "rainfall_mm": 900, "humidity": "moderate",
+        "sunlight_hours": 8.5, "altitude": "medium", "districts": ["Adilabad", "Bhadradri Kothagudem", "Hyderabad", "Jagtial", "Jangaon", "Jayashankar Bhupalpally", "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Kumuram Bheem", "Mahabubabad", "Mahabubnagar", "Mancherial", "Medak", "Medchal–Malkajgiri", "Mulugu", "Nagarkurnool", "Nalgonda", "Narayanpet", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla", "Rangareddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy", "Warangal Rural", "Warangal Urban", "Yadadri Bhuvanagiri"]
+    },
+    "Tripura": {
+        "climate": "sub_tropical", "rainfall": "high", "temperature": "moderate", "soil": "alluvial",
+        "avg_temp": {"min": 15, "max": 30}, "rainfall_mm": 2000, "humidity": "high",
+        "sunlight_hours": 6.5, "altitude": "low", "districts": ["Dhalai", "Gomati", "Khowai", "North Tripura", "Sepahijala", "South Tripura", "Unakoti", "West Tripura"]
+    },
+    "Uttar Pradesh": {
+        "climate": "sub_tropical", "rainfall": "moderate", "temperature": "hot", "soil": "alluvial",
+        "avg_temp": {"min": 18, "max": 35}, "rainfall_mm": 1000, "humidity": "moderate",
+        "sunlight_hours": 7.5, "altitude": "low", "districts": ["Agra", "Aligarh", "Ambedkar Nagar", "Amethi", "Amroha", "Auraiya", "Azamgarh", "Baghpat", "Bahraich", "Ballia", "Balrampur", "Banda", "Barabanki", "Bareilly", "Basti", "Bhadohi", "Bijnor", "Budaun", "Bulandshahr", "Chandauli", "Chitrakoot", "Deoria", "Etah", "Etawah", "Ayodhya", "Farrukhabad", "Fatehpur", "Firozabad", "Gautam Buddha Nagar", "Ghaziabad", "Ghazipur", "Gonda", "Gorakhpur", "Hamirpur", "Hapur", "Hardoi", "Hathras", "Jalaun", "Jaunpur", "Jhansi", "Kannauj", "Kanpur Dehat", "Kanpur Nagar", "Kasganj", "Kaushambi", "Kushinagar", "Lakhimpur Kheri", "Lalitpur", "Lucknow", "Maharajganj", "Mahoba", "Mainpuri", "Mathura", "Mau", "Meerut", "Mirzapur", "Moradabad", "Muzaffarnagar", "Pilibhit", "Pratapgarh", "Prayagraj", "Raebareli", "Rampur", "Saharanpur", "Sambhal", "Sant Kabir Nagar", "Shahjahanpur", "Shamli", "Shravasti", "Siddharthnagar", "Sitapur", "Sonbhadra", "Sultanpur", "Unnao", "Varanasi"]
+    },
+    "Uttarakhand": {
+        "climate": "temperate", "rainfall": "moderate", "temperature": "cool", "soil": "mountainous",
+        "avg_temp": {"min": 8, "max": 25}, "rainfall_mm": 1500, "humidity": "moderate",
+        "sunlight_hours": 7.0, "altitude": "high", "districts": ["Almora", "Bageshwar", "Chamoli", "Champawat", "Dehradun", "Haridwar", "Nainital", "Pauri Garhwal", "Pithoragarh", "Rudraprayag", "Tehri Garhwal", "Udham Singh Nagar", "Uttarkashi"]
+    },
+    "West Bengal": {
+        "climate": "tropical", "rainfall": "high", "temperature": "moderate", "soil": "alluvial",
+        "avg_temp": {"min": 18, "max": 32}, "rainfall_mm": 1800, "humidity": "high",
+        "sunlight_hours": 7.0, "altitude": "low", "districts": ["Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur", "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram", "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia", "North 24 Parganas", "Paschim Bardhaman", "Paschim Medinipur", "Purba Bardhaman", "Purba Medinipur", "Purulia", "South 24 Parganas", "Uttar Dinajpur"]
+    }
+}
+
 def get_current_season():
     """Get current season based on month"""
     current_month = datetime.datetime.now().month
@@ -329,6 +473,317 @@ def get_crop_details(crop_name):
         'market_price': get_market_price_score(crop_name), 'profit_margin': get_profit_margin_score(crop_name)
     }
     return jsonify(crop_data)
+
+@app.route('/api/states')
+def get_states():
+    """Get all Indian states for the suitability feature."""
+    return jsonify(list(INDIAN_STATES.keys()))
+
+@app.route('/api/suitability/<state_name>')
+def get_location_suitability(state_name):
+    """Get suitable crops for a specific state."""
+    try:
+        if state_name not in INDIAN_STATES:
+            return jsonify({"error": "State not found"}), 404
+        
+        suitable_crops = get_suitable_crops_for_location(state_name, limit=15)
+        state_info = INDIAN_STATES[state_name]
+        
+        return jsonify({
+            "state": state_name,
+            "state_info": state_info,
+            "suitable_crops": suitable_crops
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/suitability/crop/<crop_name>/<state_name>')
+def get_crop_location_details(crop_name, state_name):
+    """Get detailed suitability analysis for a specific crop in a specific state."""
+    try:
+        if crop_name not in CROP_INFO or state_name not in INDIAN_STATES:
+            return jsonify({"error": "Crop or state not found"}), 404
+        
+        suitability_result = calculate_location_suitability(crop_name, state_name)
+        crop_data = CROP_INFO[crop_name].copy()
+        state_data = INDIAN_STATES[state_name]
+        
+        # Handle the new return format
+        if isinstance(suitability_result, dict):
+            suitability_score = suitability_result['total_score']
+            detailed_scores = suitability_result['detailed_scores']
+            recommendations = suitability_result['recommendations']
+        else:
+            suitability_score = suitability_result
+            detailed_scores = {}
+            recommendations = ["Follow standard best practices for this crop."]
+        
+        # Add suitability analysis
+        analysis = {
+            "suitability_score": suitability_score,
+            "detailed_scores": detailed_scores,
+            "recommendations": recommendations,
+            "state_climate": state_data,
+            "climate_compatibility": {
+                "temperature": get_climate_suitability(crop_name, 'temperature'),
+                "humidity": get_climate_suitability(crop_name, 'humidity'),
+                "rainfall": get_climate_suitability(crop_name, 'rainfall'),
+                "sunlight": get_climate_suitability(crop_name, 'sunlight'),
+                "wind": get_climate_suitability(crop_name, 'wind')
+            },
+            "soil_compatibility": {
+                "ph_range": get_soil_ph_range(crop_name),
+                "drainage": get_soil_drainage(crop_name),
+                "fertility": get_soil_fertility(crop_name)
+            },
+            "regional_preference": state_name in crop_data.get('regions', [])
+        }
+        
+        crop_data['suitability_analysis'] = analysis
+        return jsonify(crop_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def calculate_location_suitability(crop_name, state_name, season=None):
+    """Calculate detailed suitability score for a crop in a specific state."""
+    if crop_name not in CROP_INFO or state_name not in INDIAN_STATES:
+        return 0
+    
+    crop_data = CROP_INFO[crop_name]
+    state_data = INDIAN_STATES[state_name]
+    
+    # Initialize detailed scoring
+    scores = {
+        'regional_preference': 0,
+        'climate_compatibility': 0,
+        'soil_compatibility': 0,
+        'seasonal_compatibility': 0,
+        'market_factors': 0
+    }
+    
+    # 1. Regional Preference (25% weight)
+    if state_name in crop_data.get('regions', []):
+        scores['regional_preference'] = 25
+    else:
+        # Check if any neighboring states grow this crop
+        neighboring_states = get_neighboring_states(state_name)
+        if any(neighbor in crop_data.get('regions', []) for neighbor in neighboring_states):
+            scores['regional_preference'] = 15
+    
+    # 2. Climate Compatibility (35% weight)
+    climate_score = 0
+    climate_suitability = get_climate_suitability(crop_name, 'temperature')
+    
+    # Temperature compatibility
+    if state_data['climate'] == 'tropical':
+        if climate_suitability >= 8:
+            climate_score += 15
+        elif climate_suitability >= 6:
+            climate_score += 10
+    elif state_data['climate'] == 'sub_tropical':
+        if 5 <= climate_suitability <= 8:
+            climate_score += 15
+        elif 4 <= climate_suitability <= 9:
+            climate_score += 10
+    elif state_data['climate'] == 'temperate':
+        if climate_suitability <= 7:
+            climate_score += 15
+        elif climate_suitability <= 8:
+            climate_score += 10
+    elif state_data['climate'] == 'arid':
+        if climate_suitability >= 7:
+            climate_score += 12
+        elif climate_suitability >= 5:
+            climate_score += 8
+    
+    # Rainfall compatibility
+    rainfall_suitability = get_climate_suitability(crop_name, 'rainfall')
+    if state_data['rainfall'] == 'very_high' and rainfall_suitability >= 8:
+        climate_score += 10
+    elif state_data['rainfall'] == 'high' and rainfall_suitability >= 7:
+        climate_score += 10
+    elif state_data['rainfall'] == 'moderate' and 5 <= rainfall_suitability <= 8:
+        climate_score += 10
+    elif state_data['rainfall'] == 'low' and rainfall_suitability <= 6:
+        climate_score += 10
+    elif state_data['rainfall'] == 'very_low' and rainfall_suitability <= 5:
+        climate_score += 10
+    
+    # Humidity compatibility
+    humidity_suitability = get_climate_suitability(crop_name, 'humidity')
+    if state_data.get('humidity') == 'very_high' and humidity_suitability >= 8:
+        climate_score += 5
+    elif state_data.get('humidity') == 'high' and humidity_suitability >= 7:
+        climate_score += 5
+    elif state_data.get('humidity') == 'moderate' and 5 <= humidity_suitability <= 8:
+        climate_score += 5
+    elif state_data.get('humidity') == 'low' and humidity_suitability <= 6:
+        climate_score += 5
+    
+    scores['climate_compatibility'] = min(climate_score, 35)
+    
+    # 3. Soil Compatibility (20% weight)
+    soil_score = 0
+    soil_type = state_data['soil']
+    
+    # Detailed soil-crop matching
+    soil_crop_mapping = {
+        'alluvial': ['Rice', 'Wheat', 'Sugarcane', 'Pulses', 'Vegetables'],
+        'black_soil': ['Cotton', 'Soybean', 'Groundnut', 'Sunflower', 'Sugarcane'],
+        'red_soil': ['Pulses', 'Oilseeds', 'Millets', 'Cotton', 'Tobacco'],
+        'laterite': ['Tea', 'Coffee', 'Rubber', 'Cashew', 'Coconut'],
+        'mountainous': ['Apples', 'Pears', 'Plums', 'Cherries', 'Tea'],
+        'desert': ['Millets', 'Pulses', 'Oilseeds', 'Cactus', 'Drought-resistant crops']
+    }
+    
+    if crop_name in soil_crop_mapping.get(soil_type, []):
+        soil_score += 15
+    elif any(crop in crop_name for crop in soil_crop_mapping.get(soil_type, [])):
+        soil_score += 10
+    
+    # pH compatibility
+    ph_range = get_soil_ph_range(crop_name)
+    if ph_range:
+        soil_score += 5
+    
+    scores['soil_compatibility'] = min(soil_score, 20)
+    
+    # 4. Seasonal Compatibility (15% weight)
+    if season:
+        seasonal_score = calculate_seasonal_compatibility(crop_name, season, state_data)
+        scores['seasonal_compatibility'] = min(seasonal_score, 15)
+    else:
+        # If no season specified, give moderate score
+        scores['seasonal_compatibility'] = 7
+    
+    # 5. Market Factors (5% weight)
+    market_score = 0
+    investment_score = get_investment_score(crop_name)
+    market_price_score = get_market_price_score(crop_name)
+    
+    # Consider market factors
+    if market_price_score >= 80:
+        market_score += 3
+    elif market_price_score >= 60:
+        market_score += 2
+    
+    if investment_score <= 50:  # Lower investment is better for small farmers
+        market_score += 2
+    elif investment_score <= 70:
+        market_score += 1
+    
+    scores['market_factors'] = min(market_score, 5)
+    
+    # Calculate total weighted score
+    total_score = sum(scores.values())
+    
+    return {
+        'total_score': min(total_score, 100),
+        'detailed_scores': scores,
+        'recommendations': generate_recommendations(scores, crop_name, state_name)
+    }
+
+def get_neighboring_states(state_name):
+    """Get neighboring states for regional preference calculation."""
+    neighbors = {
+        "Andhra Pradesh": ["Telangana", "Karnataka", "Tamil Nadu", "Odisha"],
+        "Arunachal Pradesh": ["Assam", "Nagaland"],
+        "Assam": ["Arunachal Pradesh", "Nagaland", "Manipur", "Mizoram", "Tripura", "Meghalaya", "West Bengal"],
+        "Bihar": ["Uttar Pradesh", "Jharkhand", "West Bengal"],
+        "Chhattisgarh": ["Madhya Pradesh", "Maharashtra", "Telangana", "Odisha", "Jharkhand", "Uttar Pradesh"],
+        "Goa": ["Maharashtra", "Karnataka"],
+        "Gujarat": ["Rajasthan", "Madhya Pradesh", "Maharashtra"],
+        "Haryana": ["Punjab", "Himachal Pradesh", "Uttar Pradesh", "Rajasthan"],
+        "Himachal Pradesh": ["Punjab", "Haryana", "Uttarakhand", "Jammu and Kashmir"],
+        "Jharkhand": ["Bihar", "West Bengal", "Odisha", "Chhattisgarh", "Uttar Pradesh"],
+        "Karnataka": ["Maharashtra", "Goa", "Kerala", "Tamil Nadu", "Andhra Pradesh", "Telangana"],
+        "Kerala": ["Karnataka", "Tamil Nadu"],
+        "Madhya Pradesh": ["Rajasthan", "Uttar Pradesh", "Chhattisgarh", "Maharashtra", "Gujarat"],
+        "Maharashtra": ["Gujarat", "Madhya Pradesh", "Chhattisgarh", "Telangana", "Karnataka", "Goa"],
+        "Manipur": ["Nagaland", "Mizoram", "Assam"],
+        "Meghalaya": ["Assam"],
+        "Mizoram": ["Manipur", "Tripura", "Assam"],
+        "Nagaland": ["Arunachal Pradesh", "Assam", "Manipur"],
+        "Odisha": ["West Bengal", "Jharkhand", "Chhattisgarh", "Andhra Pradesh"],
+        "Punjab": ["Haryana", "Himachal Pradesh", "Rajasthan"],
+        "Rajasthan": ["Punjab", "Haryana", "Uttar Pradesh", "Madhya Pradesh", "Gujarat"],
+        "Sikkim": ["West Bengal"],
+        "Tamil Nadu": ["Kerala", "Karnataka", "Andhra Pradesh"],
+        "Telangana": ["Maharashtra", "Chhattisgarh", "Andhra Pradesh", "Karnataka"],
+        "Tripura": ["Assam", "Mizoram"],
+        "Uttar Pradesh": ["Uttarakhand", "Haryana", "Rajasthan", "Madhya Pradesh", "Chhattisgarh", "Jharkhand", "Bihar"],
+        "Uttarakhand": ["Himachal Pradesh", "Uttar Pradesh"],
+        "West Bengal": ["Sikkim", "Assam", "Bihar", "Jharkhand", "Odisha"]
+    }
+    return neighbors.get(state_name, [])
+
+def calculate_seasonal_compatibility(crop_name, season, state_data):
+    """Calculate seasonal compatibility score."""
+    seasonal_crops = {
+        'kharif': ['Rice', 'Maize', 'Cotton', 'Jute', 'Sugarcane', 'Pulses'],
+        'rabi': ['Wheat', 'Barley', 'Mustard', 'Peas', 'Lentil', 'Chickpea'],
+        'zaid': ['Watermelon', 'Muskmelon', 'Cucumber', 'Vegetables']
+    }
+    
+    if crop_name in seasonal_crops.get(season, []):
+        return 15
+    elif any(crop in crop_name for crop in seasonal_crops.get(season, [])):
+        return 10
+    else:
+        return 5
+
+def generate_recommendations(scores, crop_name, state_name):
+    """Generate specific recommendations based on scores."""
+    recommendations = []
+    
+    if scores['regional_preference'] < 15:
+        recommendations.append("This crop is not commonly grown in your region. Consider local alternatives.")
+    
+    if scores['climate_compatibility'] < 20:
+        recommendations.append("Climate conditions may not be optimal. Consider irrigation or shade structures.")
+    
+    if scores['soil_compatibility'] < 10:
+        recommendations.append("Soil type may require amendments. Consider soil testing and improvement.")
+    
+    if scores['seasonal_compatibility'] < 10:
+        recommendations.append("Current season may not be ideal. Plan for the next suitable season.")
+    
+    if scores['market_factors'] < 3:
+        recommendations.append("Market conditions may not be favorable. Research local demand.")
+    
+    if not recommendations:
+        recommendations.append("Excellent conditions for this crop! Follow standard best practices.")
+    
+    return recommendations
+
+def get_suitable_crops_for_location(state_name, limit=10):
+    """Get top suitable crops for a specific location."""
+    if state_name not in INDIAN_STATES:
+        return []
+    
+    crop_scores = []
+    for crop_name in CROP_INFO.keys():
+        suitability_result = calculate_location_suitability(crop_name, state_name)
+        if isinstance(suitability_result, dict):
+            score = suitability_result['total_score']
+        else:
+            score = suitability_result
+            
+        if score > 0:
+            crop_scores.append({
+                'crop_name': crop_name,
+                'suitability_score': score,
+                'image': CROP_INFO[crop_name].get('image', 'crop.png'),
+                'description': CROP_INFO[crop_name].get('description', ''),
+                'growing_season': CROP_INFO[crop_name].get('growing_season', ''),
+                'water_requirements': CROP_INFO[crop_name].get('water_requirements', ''),
+                'expected_yield': CROP_INFO[crop_name].get('expected_yield', ''),
+                'market_price': CROP_INFO[crop_name].get('market_price', '')
+            })
+    
+    # Sort by suitability score (descending) and return top results
+    crop_scores.sort(key=lambda x: x['suitability_score'], reverse=True)
+    return crop_scores[:limit]
 
 if __name__ == "__main__":
     app.run(debug=True)
