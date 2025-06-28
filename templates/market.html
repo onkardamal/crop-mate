@@ -6,11 +6,133 @@
     <title>CropMate - Market Trends</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container { background: #ffffff; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.05); padding: 2rem; margin-top: 2rem; margin-bottom: 2rem; }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 2rem; }
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar { 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(33, 37, 41, 0.95) !important;
+            backdrop-filter: blur(10px);
+        }
+        .main-container { 
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .trend-up { color: #28a745; }
+        .trend-down { color: #dc3545; }
+        .trend-stable { color: #6c757d; }
+        .price-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+        .crop-selector {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .insight-card {
+            border-left: 4px solid #007bff;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .recommendation-card {
+            border-left: 4px solid #28a745;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .risk-card {
+            border-left: 4px solid #dc3545;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        .tab-content {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            border-radius: 10px 10px 0 0;
+            margin-right: 0.5rem;
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .nav-tabs .nav-link.active {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 3px solid #007bff;
+        }
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .volatility-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .volatility-low { background: #d4edda; color: #155724; }
+        .volatility-medium { background: #fff3cd; color: #856404; }
+        .volatility-high { background: #f8d7da; color: #721c24; }
+        .volatility-very-high { background: #f5c6cb; color: #721c24; }
     </style>
 </head>
 <body>
@@ -38,20 +160,501 @@
         </div>
     </div>
 </nav>
-<div class="container">
-    <h1><i class="bi bi-graph-up"></i> Market Trends <span class="text-success">📈</span></h1>
+
+<div class="container main-container">
     <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i> View recent market price trends for each crop to help you decide when to sell. (Coming soon!)
+        <div class="col-12">
+            <h1 class="text-center mb-4">
+                <i class="bi bi-graph-up"></i> Market Trends & Analysis 
+                <span class="badge bg-success">Live Data</span>
+                <span id="liveIndicator" class="badge bg-warning">Live Updates</span>
+            </h1>
+            <p class="text-center text-muted mb-4">Track real-time market prices, analyze trends, and get insights to maximize your profits</p>
+            <div class="text-center mb-3">
+                <small class="text-muted">
+                    <i class="bi bi-clock"></i> Last Updated: <span id="lastUpdated">Loading...</span>
+                    | Next Update: <span id="nextUpdate">Loading...</span>
+                </small>
             </div>
-            <div class="text-center">
-                <i class="bi bi-tools" style="font-size: 4rem; color: #6c757d;"></i>
-                <p class="mt-3">We're working hard to bring you this feature. Stay tuned!</p>
+        </div>
+    </div>
+
+    <!-- Crop Selector -->
+    <div class="crop-selector">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <label for="cropSelect" class="form-label fw-bold">Select Crop:</label>
+                <select id="cropSelect" class="form-select">
+                    <option value="">All Crops</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Sugarcane">Sugarcane</option>
+                    <option value="Maize">Maize</option>
+                    <option value="Pulses">Pulses</option>
+                    <option value="Oilseeds">Oilseeds</option>
+                    <option value="Vegetables">Vegetables</option>
+                    <option value="Fruits">Fruits</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="periodSelect" class="form-label fw-bold">Time Period:</label>
+                <select id="periodSelect" class="form-select">
+                    <option value="3months">3 Months</option>
+                    <option value="6months" selected>6 Months</option>
+                    <option value="1year">1 Year</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button id="refreshBtn" class="btn btn-primary w-100 mt-4">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading market data...</p>
+    </div>
+
+    <!-- Market Overview -->
+    <div id="marketOverview" class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h4><i class="bi bi-currency-rupee"></i></h4>
+                <h5 id="avgPrice">₹0</h5>
+                <small>Average Price</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h4><i class="bi bi-graph-up-arrow"></i></h4>
+                <h5 id="topPerformer">-</h5>
+                <small>Top Performer</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h4><i class="bi bi-shield-check"></i></h4>
+                <h5 id="mostStable">-</h5>
+                <small>Most Stable</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h4><i class="bi bi-lightning"></i></h4>
+                <h5 id="highestPotential">-</h5>
+                <small>Highest Potential</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <ul class="nav nav-tabs" id="marketTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="trends-tab" data-bs-toggle="tab" data-bs-target="#trends" type="button" role="tab">
+                <i class="bi bi-graph-up"></i> Price Trends
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="forecast-tab" data-bs-toggle="tab" data-bs-target="#forecast" type="button" role="tab">
+                <i class="bi bi-calendar3"></i> Price Forecast
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button" role="tab">
+                <i class="bi bi-lightbulb"></i> Market Insights
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab">
+                <i class="bi bi-bar-chart"></i> Crop Comparison
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="seasonal-tab" data-bs-toggle="tab" data-bs-target="#seasonal" type="button" role="tab">
+                <i class="bi bi-calendar-month"></i> Seasonal Analysis
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="marketTabContent">
+        <!-- Price Trends Tab -->
+        <div class="tab-pane fade show active" id="trends" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <h4><i class="bi bi-graph-up"></i> Current Market Prices & Trends</h4>
+                    <div id="trendsContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Forecast Tab -->
+        <div class="tab-pane fade" id="forecast" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <h4><i class="bi bi-calendar3"></i> Price Forecast (Next 3 Months)</h4>
+                    <div class="chart-container">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Insights Tab -->
+        <div class="tab-pane fade" id="insights" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <h4><i class="bi bi-lightbulb"></i> Market Insights & Recommendations</h4>
+                    <div id="insightsContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crop Comparison Tab -->
+        <div class="tab-pane fade" id="comparison" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <h4><i class="bi bi-bar-chart"></i> Crop Performance Comparison</h4>
+                    <div class="comparison-table">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Crop</th>
+                                    <th>Current Price</th>
+                                    <th>Trend</th>
+                                    <th>Change %</th>
+                                    <th>Volatility</th>
+                                    <th>Performance Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seasonal Analysis Tab -->
+        <div class="tab-pane fade" id="seasonal" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <h4><i class="bi bi-calendar-month"></i> Seasonal Price Patterns</h4>
+                    <div id="seasonalContent"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let currentCrop = '';
+let forecastChart = null;
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    loadMarketData();
+    
+    // Event listeners
+    document.getElementById('cropSelect').addEventListener('change', function() {
+        currentCrop = this.value;
+        loadMarketData();
+    });
+    
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        loadMarketData();
+    });
+    
+    document.getElementById('periodSelect').addEventListener('change', function() {
+        loadMarketData();
+    });
+});
+
+function showLoading() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('marketOverview').style.display = 'none';
+    document.getElementById('marketTabContent').style.display = 'none';
+}
+
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('marketOverview').style.display = 'flex';
+    document.getElementById('marketTabContent').style.display = 'block';
+}
+
+async function loadMarketData() {
+    showLoading();
+    
+    try {
+        // Load market trends
+        const trendsResponse = await fetch('/api/market/trends');
+        const trendsData = await trendsResponse.json();
+        
+        // Load top performers
+        const performersResponse = await fetch('/api/market/top-performers');
+        const performersData = await performersResponse.json();
+        
+        // Update overview metrics
+        updateOverviewMetrics(trendsData.trends, performersData);
+        
+        // Update trends content
+        updateTrendsContent(trendsData.trends);
+        
+        // Load forecast if crop is selected
+        if (currentCrop) {
+            await loadForecast(currentCrop);
+            await loadInsights(currentCrop);
+            await loadSeasonalAnalysis(currentCrop);
+        }
+        
+        // Update comparison table
+        updateComparisonTable(trendsData.trends);
+        
+    } catch (error) {
+        console.error('Error loading market data:', error);
+        showError('Failed to load market data. Please try again.');
+    }
+    
+    hideLoading();
+}
+
+function updateOverviewMetrics(trends, performersData) {
+    const crops = Object.values(trends);
+    const avgPrice = crops.reduce((sum, crop) => sum + crop.current_price, 0) / crops.length;
+    
+    document.getElementById('avgPrice').textContent = `₹${Math.round(avgPrice)}`;
+    document.getElementById('topPerformer').textContent = performersData.best_crop || '-';
+    document.getElementById('mostStable').textContent = performersData.most_stable || '-';
+    document.getElementById('highestPotential').textContent = performersData.highest_potential || '-';
+}
+
+function updateTrendsContent(trends) {
+    const container = document.getElementById('trendsContent');
+    container.innerHTML = '';
+    
+    Object.entries(trends).forEach(([cropName, data]) => {
+        const trendIcon = data.trend === 'increasing' ? 'bi-arrow-up' : 
+                         data.trend === 'decreasing' ? 'bi-arrow-down' : 'bi-arrow-right';
+        const trendClass = data.trend === 'increasing' ? 'trend-up' : 
+                          data.trend === 'decreasing' ? 'trend-down' : 'trend-stable';
+        
+        const card = document.createElement('div');
+        card.className = 'col-md-6 col-lg-4 mb-3';
+        card.innerHTML = `
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">${cropName}</h5>
+                        <span class="badge ${getVolatilityClass(data.volatility)}">${data.volatility}</span>
+                    </div>
+                    <div class="price-card mb-3">
+                        <h3 class="mb-1">₹${data.current_price}</h3>
+                        <small>${data.unit}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="${trendClass}">
+                            <i class="bi ${trendIcon}"></i> ${data.change_percent}%
+                        </span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="selectCrop('${cropName}')">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function getVolatilityClass(volatility) {
+    switch(volatility) {
+        case 'low': return 'volatility-low';
+        case 'medium': return 'volatility-medium';
+        case 'high': return 'volatility-high';
+        case 'very_high': return 'volatility-very-high';
+        default: return 'volatility-medium';
+    }
+}
+
+async function loadForecast(cropName) {
+    try {
+        const response = await fetch(`/api/market/forecast/${cropName}`);
+        const data = await response.json();
+        
+        if (forecastChart) {
+            forecastChart.destroy();
+        }
+        
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+        forecastChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.forecast.map(f => `Month ${f.month}`),
+                datasets: [{
+                    label: `${cropName} Price Forecast`,
+                    data: data.forecast.map(f => f.price),
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${cropName} - 3 Month Price Forecast`
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Price (₹)'
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error loading forecast:', error);
+    }
+}
+
+async function loadInsights(cropName) {
+    try {
+        const response = await fetch(`/api/market/insights/${cropName}`);
+        const data = await response.json();
+        
+        const container = document.getElementById('insightsContent');
+        container.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="insight-card">
+                        <h6><i class="bi bi-info-circle"></i> Current Situation</h6>
+                        <p>${data.insights.current_situation}</p>
+                    </div>
+                    <div class="insight-card">
+                        <h6><i class="bi bi-graph-up"></i> Trend Analysis</h6>
+                        <p>${data.insights.trend_analysis}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="recommendation-card">
+                        <h6><i class="bi bi-check-circle"></i> Recommendations</h6>
+                        <ul>
+                            ${data.insights.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ${data.insights.risks.length > 0 ? `
+                        <div class="risk-card">
+                            <h6><i class="bi bi-exclamation-triangle"></i> Risks</h6>
+                            <ul>
+                                ${data.insights.risks.map(risk => `<li>${risk}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    ${data.insights.opportunities.length > 0 ? `
+                        <div class="recommendation-card">
+                            <h6><i class="bi bi-star"></i> Opportunities</h6>
+                            <ul>
+                                ${data.insights.opportunities.map(opp => `<li>${opp}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading insights:', error);
+    }
+}
+
+async function loadSeasonalAnalysis(cropName) {
+    try {
+        const response = await fetch(`/api/market/seasonal-analysis?crop=${cropName}`);
+        const data = await response.json();
+        
+        const container = document.getElementById('seasonalContent');
+        container.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6><i class="bi bi-calendar3"></i> Seasonal Pattern</h6>
+                            <p>${data.seasonal_analysis.seasonal_pattern}</p>
+                            <h6><i class="bi bi-calendar-check"></i> Current Season</h6>
+                            <p class="text-capitalize">${data.seasonal_analysis.current_season}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6><i class="bi bi-lightbulb"></i> Seasonal Recommendations</h6>
+                            <ul>
+                                ${data.seasonal_analysis.seasonal_recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading seasonal analysis:', error);
+    }
+}
+
+function updateComparisonTable(trends) {
+    const tbody = document.getElementById('comparisonTable');
+    tbody.innerHTML = '';
+    
+    Object.entries(trends).forEach(([cropName, data]) => {
+        const trendIcon = data.trend === 'increasing' ? 'bi-arrow-up' : 
+                         data.trend === 'decreasing' ? 'bi-arrow-down' : 'bi-arrow-right';
+        const trendClass = data.trend === 'increasing' ? 'trend-up' : 
+                          data.trend === 'decreasing' ? 'trend-down' : 'trend-stable';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${cropName}</strong></td>
+            <td>₹${data.current_price}</td>
+            <td><span class="${trendClass}"><i class="bi ${trendIcon}"></i> ${data.trend}</span></td>
+            <td class="${trendClass}">${data.change_percent}%</td>
+            <td><span class="badge ${getVolatilityClass(data.volatility)}">${data.volatility}</span></td>
+            <td>${Math.round(data.current_price * (1 + data.change_percent/100))}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function selectCrop(cropName) {
+    document.getElementById('cropSelect').value = cropName;
+    currentCrop = cropName;
+    loadMarketData();
+    
+    // Switch to forecast tab
+    const forecastTab = new bootstrap.Tab(document.getElementById('forecast-tab'));
+    forecastTab.show();
+}
+
+function showError(message) {
+    const container = document.getElementById('trendsContent');
+    container.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> ${message}
+        </div>
+    `;
+}
+</script>
 </body>
 </html> 

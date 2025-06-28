@@ -11,6 +11,8 @@ import requests
 import json
 from utils import validate_input, parse_range
 from data_loader import CROP_INFO, get_climate_suitability, get_soil_ph_range, get_soil_drainage, get_soil_fertility, get_investment_score, get_yield_score, get_market_price_score, get_profit_margin_score
+import random
+from datetime import datetime, timedelta
 
 # Suppress scikit-learn version mismatch warnings
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -213,1142 +215,361 @@ LOCATION_SERVICES = {
     "ipinfo": "https://ipinfo.io/json"
 }
 
-def get_current_season():
-    """Get current season based on month"""
-    current_month = datetime.datetime.now().month
-    if current_month in [6, 7, 8, 9]: return "kharif"
-    elif current_month in [10, 11, 12, 1, 2, 3]: return "rabi"
-    else: return "zaid"
-
-def get_crops_by_season(season):
-    """Get crops that can be grown in a specific season"""
-    return [crop for crop, data in SEASONAL_DATA.items() if season in data or "year_round" in data]
-
-def get_month_list_from_range(month_range_str):
-    """Converts a string like 'June-July' or 'Year-round' to a list of month names."""
-    if not month_range_str or month_range_str.strip() == "":
-        return []
-    
-    if month_range_str == "Year-round":
-        return list(MONTHS.values())
-
-    months = []
-    month_names = list(MONTHS.values())
-    parts = re.split(r'[,-]', month_range_str.strip())
-    
-    # Handle single month
-    if len(parts) == 1:
-        month = parts[0].strip()
-        try:
-            month_index = month_names.index(month)
-            return [month]
-        except ValueError:
-            return []
-    
-    # Handle range
-    if len(parts) >= 2:
-        start_month = parts[0].strip()
-        end_month = parts[-1].strip()
-        
-        try:
-            start_index = month_names.index(start_month)
-            end_index = month_names.index(end_month)
-            
-            if start_index <= end_index:
-                # Normal range (e.g., June-July)
-                return month_names[start_index:end_index+1]
-            else:
-                # Cross-year range (e.g., October-January)
-                return month_names[start_index:] + month_names[:end_index+1]
-        except ValueError:
-            return []
-    
-    return []
-
-def get_calendar_data():
-    """Prepares all data needed for the calendar template."""
-    calendar_data = {}
-    
-    # First, add all crops from CROP_INFO to ensure all crops are included
-    for crop in CROP_INFO.keys():
-        calendar_data[crop] = {
-            'sowing': [],
-            'growing': [],
-            'harvesting': []
-        }
-    
-    # Then populate with seasonal data
-    for crop, seasons in SEASONAL_DATA.items():
-        if crop not in calendar_data:
-            calendar_data[crop] = {
-                'sowing': [],
-                'growing': [],
-                'harvesting': []
-            }
-        
-        for season, data in seasons.items():
-            # Get months for each activity and remove duplicates
-            sowing_months = get_month_list_from_range(data.get('sowing', ''))
-            growing_months = get_month_list_from_range(data.get('growing', ''))
-            harvesting_months = get_month_list_from_range(data.get('harvesting', ''))
-            
-            # Add months without duplicates
-            for month in sowing_months:
-                if month not in calendar_data[crop]['sowing']:
-                    calendar_data[crop]['sowing'].append(month)
-            
-            for month in growing_months:
-                if month not in calendar_data[crop]['growing']:
-                    calendar_data[crop]['growing'].append(month)
-            
-            for month in harvesting_months:
-                if month not in calendar_data[crop]['harvesting']:
-                    calendar_data[crop]['harvesting'].append(month)
-    
-    return calendar_data
-
-@app.route('/')
-def index():
-    return render_template("index.html")
-
-@app.route("/predict", methods=['POST'])
-def predict():
-    try:
-        data = {
-            'Nitrogen': request.form['Nitrogen'],
-            'Phosporus': request.form['Phosporus'],
-            'Potassium': request.form['Potassium'],
-            'Temperature': request.form['Temperature'],
-            'Humidity': request.form['Humidity'],
-            'pH': request.form['pH'],
-            'Rainfall': request.form['Rainfall']
-        }
-        is_valid, error_message = validate_input(data)
-        if not is_valid:
-            return render_template('recommend.html', error=error_message)
-        
-        feature_list = [float(data[key]) for key in data.keys()]
-        single_pred = np.array(feature_list).reshape(1, -1)
-        mx_features = mx.transform(single_pred)
-        sc_mx_features = sc.transform(mx_features)
-        prediction = model.predict(sc_mx_features)
-
-        crop_dict = {1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
-                     8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
-                     14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
-                     19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"}
-
-        if prediction[0] in crop_dict:
-            crop = crop_dict[prediction[0]]
-            crop_details = CROP_INFO.get(crop, {
-                "description": "A suitable crop for your soil conditions.",
-                "growing_tips": ["Consult local agricultural experts for specific growing tips."],
-                "image": "crop.png"
-            })
-            return render_template('recommend.html', 
-                                result=f"{crop} is the best crop to be cultivated right there",
-                                crop_details=crop_details)
-        else:
-            return render_template('recommend.html', 
-                                error="Sorry, we could not determine the best crop to be cultivated with the provided data.")
-            
-    except Exception as e:
-        return render_template('recommend.html', error=f"An error occurred: {str(e)}")
-
-@app.route('/compare')
-def compare():
-    return render_template('compare.html')
-
-@app.route('/api/crops')
-def get_crops():
-    return jsonify(list(CROP_INFO.keys()))
-
-@app.route('/recommend')
-def recommend():
-    return render_template('recommend.html')
-
-@app.route('/profitability', methods=['GET', 'POST'])
-def profitability():
-    crop_names = list(CROP_INFO.keys())
-    if request.method == 'POST':
-        try:
-            crop_name = request.form['crop_name']
-            area = float(request.form['area'])
-            costs = float(request.form['costs'])
-
-            if area <= 0 or costs <= 0:
-                return render_template('profitability.html', crops=crop_names, error="Area and costs must be positive numbers.")
-            if crop_name not in CROP_INFO:
-                return render_template('profitability.html', crops=crop_names, error="Please select a valid crop.")
-            
-            crop_data = CROP_INFO[crop_name]
-            avg_yield_per_hectare = parse_range(crop_data.get('expected_yield', '0'))
-            avg_price_per_ton = parse_range(crop_data.get('market_price', '0'))
-            
-            total_yield = avg_yield_per_hectare * area
-            gross_revenue = total_yield * avg_price_per_ton
-            net_profit = gross_revenue - costs
-            
-            results = {
-                'crop_name': crop_name, 'area': area, 'total_costs': costs,
-                'avg_yield': avg_yield_per_hectare, 'avg_price': avg_price_per_ton,
-                'total_yield': total_yield, 'gross_revenue': gross_revenue,
-                'net_profit': net_profit, 'image': crop_data.get('image', 'crop.png')
-            }
-            return render_template('profitability.html', crops=crop_names, results=results)
-        except (ValueError, TypeError):
-            return render_template('profitability.html', crops=crop_names, error="Invalid input. Please enter valid numbers for area and costs.")
-        except Exception as e:
-            return render_template('profitability.html', crops=crop_names, error=f"An error occurred: {str(e)}")
-    return render_template('profitability.html', crops=crop_names)
-
-@app.route('/calendar')
-def calendar():
-    current_season = get_current_season()
-    seasonal_crops = get_crops_by_season(current_season)
-    template_data = {
-        'current_season': current_season.title(),
-        'current_month': MONTHS[datetime.datetime.now().month],
-        'seasonal_crops': seasonal_crops,
-        'all_crops': list(CROP_INFO.keys()),
-        'all_seasons': ['kharif', 'rabi', 'zaid'],
-        'months': list(MONTHS.values()),
-        'calendar_data': get_calendar_data(),
-        'crop_images': {crop: info.get('image', 'crop.png') for crop, info in CROP_INFO.items()}
+# Market data and trends
+MARKET_DATA = {
+    "Rice": {
+        "current_price": 2800,
+        "unit": "per quintal",
+        "trend": "increasing",
+        "change_percent": 5.2,
+        "price_history": [
+            {"date": "2024-01", "price": 2600},
+            {"date": "2024-02", "price": 2650},
+            {"date": "2024-03", "price": 2700},
+            {"date": "2024-04", "price": 2750},
+            {"date": "2024-05", "price": 2800}
+        ],
+        "seasonal_pattern": "Prices peak during monsoon (July-September)",
+        "demand_factors": ["Festival season", "Export demand", "Stock levels"],
+        "supply_factors": ["Harvest season", "Weather conditions", "Storage capacity"],
+        "market_centers": ["Mumbai", "Delhi", "Kolkata", "Chennai"],
+        "export_markets": ["Bangladesh", "Nepal", "Sri Lanka"],
+        "min_support_price": 2040,
+        "max_price": 3200,
+        "volatility": "medium"
+    },
+    "Wheat": {
+        "current_price": 2200,
+        "unit": "per quintal",
+        "trend": "stable",
+        "change_percent": 1.8,
+        "price_history": [
+            {"date": "2024-01", "price": 2150},
+            {"date": "2024-02", "price": 2180},
+            {"date": "2024-03", "price": 2200},
+            {"date": "2024-04", "price": 2210},
+            {"date": "2024-05", "price": 2200}
+        ],
+        "seasonal_pattern": "Prices stable throughout the year with slight increase in winter",
+        "demand_factors": ["Government procurement", "Bakery industry", "Household consumption"],
+        "supply_factors": ["Rabi harvest", "Storage facilities", "Transportation"],
+        "market_centers": ["Punjab", "Haryana", "Madhya Pradesh", "Uttar Pradesh"],
+        "export_markets": ["Afghanistan", "Bangladesh", "Nepal"],
+        "min_support_price": 2015,
+        "max_price": 2500,
+        "volatility": "low"
+    },
+    "Cotton": {
+        "current_price": 6500,
+        "unit": "per quintal",
+        "trend": "decreasing",
+        "change_percent": -3.5,
+        "price_history": [
+            {"date": "2024-01", "price": 6800},
+            {"date": "2024-02", "price": 6700},
+            {"date": "2024-03", "price": 6600},
+            {"date": "2024-04", "price": 6550},
+            {"date": "2024-05", "price": 6500}
+        ],
+        "seasonal_pattern": "Prices fluctuate based on textile industry demand",
+        "demand_factors": ["Textile industry", "Export demand", "Fashion trends"],
+        "supply_factors": ["Kharif harvest", "Weather conditions", "Pest attacks"],
+        "market_centers": ["Gujarat", "Maharashtra", "Telangana", "Punjab"],
+        "export_markets": ["China", "Bangladesh", "Vietnam"],
+        "min_support_price": 5726,
+        "max_price": 7500,
+        "volatility": "high"
+    },
+    "Sugarcane": {
+        "current_price": 315,
+        "unit": "per quintal",
+        "trend": "increasing",
+        "change_percent": 4.8,
+        "price_history": [
+            {"date": "2024-01", "price": 300},
+            {"date": "2024-02", "price": 305},
+            {"date": "2024-03", "price": 310},
+            {"date": "2024-04", "price": 312},
+            {"date": "2024-05", "price": 315}
+        ],
+        "seasonal_pattern": "Prices peak during crushing season (October-March)",
+        "demand_factors": ["Sugar industry", "Ethanol production", "Jaggery making"],
+        "supply_factors": ["Crushing season", "Sugar recovery", "Transportation"],
+        "market_centers": ["Uttar Pradesh", "Maharashtra", "Karnataka", "Tamil Nadu"],
+        "export_markets": ["Sri Lanka", "Nepal", "Bangladesh"],
+        "min_support_price": 290,
+        "max_price": 350,
+        "volatility": "medium"
+    },
+    "Maize": {
+        "current_price": 1800,
+        "unit": "per quintal",
+        "trend": "increasing",
+        "change_percent": 6.2,
+        "price_history": [
+            {"date": "2024-01", "price": 1700},
+            {"date": "2024-02", "price": 1720},
+            {"date": "2024-03", "price": 1750},
+            {"date": "2024-04", "price": 1780},
+            {"date": "2024-05", "price": 1800}
+        ],
+        "seasonal_pattern": "Prices increase during poultry feed demand season",
+        "demand_factors": ["Poultry feed", "Starch industry", "Ethanol production"],
+        "supply_factors": ["Kharif harvest", "Storage conditions", "Transportation"],
+        "market_centers": ["Karnataka", "Madhya Pradesh", "Maharashtra", "Bihar"],
+        "export_markets": ["Bangladesh", "Nepal", "Vietnam"],
+        "min_support_price": 1850,
+        "max_price": 2200,
+        "volatility": "medium"
+    },
+    "Pulses": {
+        "current_price": 4500,
+        "unit": "per quintal",
+        "trend": "stable",
+        "change_percent": 0.5,
+        "price_history": [
+            {"date": "2024-01", "price": 4480},
+            {"date": "2024-02", "price": 4490},
+            {"date": "2024-03", "price": 4500},
+            {"date": "2024-04", "price": 4505},
+            {"date": "2024-05", "price": 4500}
+        ],
+        "seasonal_pattern": "Prices remain stable with slight variations",
+        "demand_factors": ["Household consumption", "Restaurant industry", "Export demand"],
+        "supply_factors": ["Rabi harvest", "Import policies", "Storage facilities"],
+        "market_centers": ["Madhya Pradesh", "Maharashtra", "Rajasthan", "Uttar Pradesh"],
+        "export_markets": ["Bangladesh", "Sri Lanka", "Nepal"],
+        "min_support_price": 4000,
+        "max_price": 5000,
+        "volatility": "low"
+    },
+    "Oilseeds": {
+        "current_price": 5200,
+        "unit": "per quintal",
+        "trend": "increasing",
+        "change_percent": 7.8,
+        "price_history": [
+            {"date": "2024-01", "price": 4800},
+            {"date": "2024-02", "price": 4900},
+            {"date": "2024-03", "price": 5000},
+            {"date": "2024-04", "price": 5100},
+            {"date": "2024-05", "price": 5200}
+        ],
+        "seasonal_pattern": "Prices increase during festival season",
+        "demand_factors": ["Edible oil industry", "Festival demand", "Export markets"],
+        "supply_factors": ["Rabi harvest", "Weather conditions", "Import policies"],
+        "market_centers": ["Madhya Pradesh", "Rajasthan", "Gujarat", "Maharashtra"],
+        "export_markets": ["China", "Bangladesh", "Nepal"],
+        "min_support_price": 4500,
+        "max_price": 6000,
+        "volatility": "high"
+    },
+    "Vegetables": {
+        "current_price": 2500,
+        "unit": "per quintal",
+        "trend": "decreasing",
+        "change_percent": -2.1,
+        "price_history": [
+            {"date": "2024-01", "price": 2550},
+            {"date": "2024-02", "price": 2530},
+            {"date": "2024-03", "price": 2520},
+            {"date": "2024-04", "price": 2510},
+            {"date": "2024-05", "price": 2500}
+        ],
+        "seasonal_pattern": "Prices vary significantly with seasonal availability",
+        "demand_factors": ["Urban consumption", "Restaurant demand", "Export markets"],
+        "supply_factors": ["Seasonal production", "Weather conditions", "Transportation"],
+        "market_centers": ["Delhi", "Mumbai", "Kolkata", "Chennai"],
+        "export_markets": ["UAE", "UK", "USA"],
+        "min_support_price": 2000,
+        "max_price": 4000,
+        "volatility": "very_high"
+    },
+    "Fruits": {
+        "current_price": 3500,
+        "unit": "per quintal",
+        "trend": "increasing",
+        "change_percent": 3.2,
+        "price_history": [
+            {"date": "2024-01", "price": 3400},
+            {"date": "2024-02", "price": 3420},
+            {"date": "2024-03", "price": 3450},
+            {"date": "2024-04", "price": 3480},
+            {"date": "2024-05", "price": 3500}
+        ],
+        "seasonal_pattern": "Prices peak during off-season periods",
+        "demand_factors": ["Urban consumption", "Export demand", "Processing industry"],
+        "supply_factors": ["Seasonal production", "Storage facilities", "Transportation"],
+        "market_centers": ["Maharashtra", "Karnataka", "Tamil Nadu", "Andhra Pradesh"],
+        "export_markets": ["UAE", "UK", "USA", "Netherlands"],
+        "min_support_price": 3000,
+        "max_price": 5000,
+        "volatility": "high"
     }
-    return render_template('calendar.html', data=template_data)
+}
 
-@app.route('/api/calendar/season/<season>')
-def get_seasonal_crops_api(season):
-    try:
-        crops = get_crops_by_season(season)
-        return jsonify({'crops': crops, 'season': season})
-    except Exception as e:
-        return jsonify({'error': str(e), 'crops': []}), 500
-
-@app.route('/api/calendar/month/<int:month_num>')
-def get_monthly_crops_api(month_num):
-    try:
-        if month_num not in MONTHS:
-            return jsonify({'error': 'Invalid month', 'crops': []}), 400
-        
-        month_name = MONTHS[month_num]
-        calendar_data = get_calendar_data()
-        monthly_crops = []
-        
-        for crop, data in calendar_data.items():
-            if (month_name in data['sowing'] or 
-                month_name in data['growing'] or 
-                month_name in data['harvesting']):
-                monthly_crops.append(crop)
+# Live market data simulation
+class LiveMarketData:
+    def __init__(self):
+        self.base_prices = {
+            "Rice": 2800,
+            "Wheat": 2200,
+            "Cotton": 6500,
+            "Sugarcane": 315,
+            "Maize": 1800,
+            "Pulses": 4500,
+            "Oilseeds": 5200,
+            "Vegetables": 2500,
+            "Fruits": 3500
+        }
+        self.last_update = datetime.now()
+        self.price_history = {}
+        self.initialize_history()
+    
+    def initialize_history(self):
+        """Initialize price history for all crops"""
+        for crop in self.base_prices.keys():
+            self.price_history[crop] = []
+            base_price = self.base_prices[crop]
+            
+            # Generate 5 months of historical data
+            for i in range(5):
+                month_ago = datetime.now() - timedelta(days=30 * (5-i))
+                # Add some realistic variation
+                variation = random.uniform(-0.1, 0.1)  # ±10% variation
+                price = int(base_price * (1 + variation))
                 
-        return jsonify({'crops': monthly_crops, 'month': month_name})
-    except Exception as e:
-        return jsonify({'error': str(e), 'crops': []}), 500
-
-@app.route('/practices')
-def practices():
-    return render_template('practices.html')
-
-@app.route('/suitability')
-def suitability():
-    return render_template('suitability.html')
-
-@app.route('/schemes')
-def schemes():
-    return render_template('schemes.html')
-
-@app.route('/market')
-def market():
-    return render_template('market.html')
-
-@app.route('/community')
-def community():
-    return render_template('community.html')
-
-@app.route('/api/crops/<crop_name>')
-def get_crop_details(crop_name):
-    if crop_name not in CROP_INFO:
-        return jsonify({"error": "Crop not found"}), 404
+                self.price_history[crop].append({
+                    "date": month_ago.strftime("%Y-%m"),
+                    "price": price
+                })
     
-    crop_data = CROP_INFO[crop_name].copy()
-    crop_data['climate_suitability'] = {
-        'temperature': get_climate_suitability(crop_name, 'temperature'), 'humidity': get_climate_suitability(crop_name, 'humidity'),
-        'rainfall': get_climate_suitability(crop_name, 'rainfall'), 'sunlight': get_climate_suitability(crop_name, 'sunlight'),
-        'wind': get_climate_suitability(crop_name, 'wind')
-    }
-    crop_data['soil_compatibility'] = {
-        'ph_range': get_soil_ph_range(crop_name), 'drainage': get_soil_drainage(crop_name), 'fertility': get_soil_fertility(crop_name)
-    }
-    crop_data['profitability'] = {
-        'investment': get_investment_score(crop_name), 'yield': get_yield_score(crop_name),
-        'market_price': get_market_price_score(crop_name), 'profit_margin': get_profit_margin_score(crop_name)
-    }
-    return jsonify(crop_data)
-
-@app.route('/api/states')
-def get_states():
-    """Get all Indian states for the suitability feature."""
-    return jsonify(list(INDIAN_STATES.keys()))
-
-@app.route('/api/suitability/<state_name>')
-def get_location_suitability(state_name):
-    """Get suitable crops for a specific state."""
-    try:
-        if state_name not in INDIAN_STATES:
-            return jsonify({"error": "State not found"}), 404
-        
-        suitable_crops = get_suitable_crops_for_location(state_name, limit=15)
-        state_info = INDIAN_STATES[state_name]
-        
-        return jsonify({
-            "state": state_name,
-            "state_info": state_info,
-            "suitable_crops": suitable_crops
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/suitability/crop/<crop_name>/<state_name>')
-def get_crop_location_details(crop_name, state_name):
-    """Get detailed suitability analysis for a specific crop in a specific state."""
-    try:
-        if crop_name not in CROP_INFO or state_name not in INDIAN_STATES:
-            return jsonify({"error": "Crop or state not found"}), 404
-        
-        suitability_result = calculate_location_suitability(crop_name, state_name)
-        crop_data = CROP_INFO[crop_name].copy()
-        state_data = INDIAN_STATES[state_name]
-        
-        # Handle the new return format
-        if isinstance(suitability_result, dict):
-            suitability_score = suitability_result['total_score']
-            detailed_scores = suitability_result['detailed_scores']
-            recommendations = suitability_result['recommendations']
-        else:
-            suitability_score = suitability_result
-            detailed_scores = {}
-            recommendations = ["Follow standard best practices for this crop."]
-        
-        # Add suitability analysis
-        analysis = {
-            "suitability_score": suitability_score,
-            "detailed_scores": detailed_scores,
-            "recommendations": recommendations,
-            "state_climate": state_data,
-            "climate_compatibility": {
-                "temperature": get_climate_suitability(crop_name, 'temperature'),
-                "humidity": get_climate_suitability(crop_name, 'humidity'),
-                "rainfall": get_climate_suitability(crop_name, 'rainfall'),
-                "sunlight": get_climate_suitability(crop_name, 'sunlight'),
-                "wind": get_climate_suitability(crop_name, 'wind')
-            },
-            "soil_compatibility": {
-                "ph_range": get_soil_ph_range(crop_name),
-                "drainage": get_soil_drainage(crop_name),
-                "fertility": get_soil_fertility(crop_name)
-            },
-            "regional_preference": state_name in crop_data.get('regions', [])
-        }
-        
-        crop_data['suitability_analysis'] = analysis
-        return jsonify(crop_data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-def calculate_location_suitability(crop_name, state_name, season=None):
-    """Calculate detailed suitability score for a crop in a specific state."""
-    if crop_name not in CROP_INFO or state_name not in INDIAN_STATES:
-        return 0
-    
-    crop_data = CROP_INFO[crop_name]
-    state_data = INDIAN_STATES[state_name]
-    
-    # Initialize detailed scoring
-    scores = {
-        'regional_preference': 0,
-        'climate_compatibility': 0,
-        'soil_compatibility': 0,
-        'seasonal_compatibility': 0,
-        'market_factors': 0
-    }
-    
-    # 1. Regional Preference (25% weight)
-    if state_name in crop_data.get('regions', []):
-        scores['regional_preference'] = 25
-    else:
-        # Check if any neighboring states grow this crop
-        neighboring_states = get_neighboring_states(state_name)
-        if any(neighbor in crop_data.get('regions', []) for neighbor in neighboring_states):
-            scores['regional_preference'] = 15
-    
-    # 2. Climate Compatibility (35% weight)
-    climate_score = 0
-    climate_suitability = get_climate_suitability(crop_name, 'temperature')
-    
-    # Temperature compatibility
-    if state_data['climate'] == 'tropical':
-        if climate_suitability >= 8:
-            climate_score += 15
-        elif climate_suitability >= 6:
-            climate_score += 10
-    elif state_data['climate'] == 'sub_tropical':
-        if 5 <= climate_suitability <= 8:
-            climate_score += 15
-        elif 4 <= climate_suitability <= 9:
-            climate_score += 10
-    elif state_data['climate'] == 'temperate':
-        if climate_suitability <= 7:
-            climate_score += 15
-        elif climate_suitability <= 8:
-            climate_score += 10
-    elif state_data['climate'] == 'arid':
-        if climate_suitability >= 7:
-            climate_score += 12
-        elif climate_suitability >= 5:
-            climate_score += 8
-    
-    # Rainfall compatibility
-    rainfall_suitability = get_climate_suitability(crop_name, 'rainfall')
-    if state_data['rainfall'] == 'very_high' and rainfall_suitability >= 8:
-        climate_score += 10
-    elif state_data['rainfall'] == 'high' and rainfall_suitability >= 7:
-        climate_score += 10
-    elif state_data['rainfall'] == 'moderate' and 5 <= rainfall_suitability <= 8:
-        climate_score += 10
-    elif state_data['rainfall'] == 'low' and rainfall_suitability <= 6:
-        climate_score += 10
-    elif state_data['rainfall'] == 'very_low' and rainfall_suitability <= 5:
-        climate_score += 10
-    
-    # Humidity compatibility
-    humidity_suitability = get_climate_suitability(crop_name, 'humidity')
-    if state_data.get('humidity') == 'very_high' and humidity_suitability >= 8:
-        climate_score += 5
-    elif state_data.get('humidity') == 'high' and humidity_suitability >= 7:
-        climate_score += 5
-    elif state_data.get('humidity') == 'moderate' and 5 <= humidity_suitability <= 8:
-        climate_score += 5
-    elif state_data.get('humidity') == 'low' and humidity_suitability <= 6:
-        climate_score += 5
-    
-    scores['climate_compatibility'] = min(climate_score, 35)
-    
-    # 3. Soil Compatibility (20% weight)
-    soil_score = 0
-    soil_type = state_data['soil']
-    
-    # Detailed soil-crop matching
-    soil_crop_mapping = {
-        'alluvial': ['Rice', 'Wheat', 'Sugarcane', 'Pulses', 'Vegetables'],
-        'black_soil': ['Cotton', 'Soybean', 'Groundnut', 'Sunflower', 'Sugarcane'],
-        'red_soil': ['Pulses', 'Oilseeds', 'Millets', 'Cotton', 'Tobacco'],
-        'laterite': ['Tea', 'Coffee', 'Rubber', 'Cashew', 'Coconut'],
-        'mountainous': ['Apples', 'Pears', 'Plums', 'Cherries', 'Tea'],
-        'desert': ['Millets', 'Pulses', 'Oilseeds', 'Cactus', 'Drought-resistant crops']
-    }
-    
-    if crop_name in soil_crop_mapping.get(soil_type, []):
-        soil_score += 15
-    elif any(crop in crop_name for crop in soil_crop_mapping.get(soil_type, [])):
-        soil_score += 10
-    
-    # pH compatibility
-    ph_range = get_soil_ph_range(crop_name)
-    if ph_range:
-        soil_score += 5
-    
-    scores['soil_compatibility'] = min(soil_score, 20)
-    
-    # 4. Seasonal Compatibility (15% weight)
-    if season:
-        seasonal_score = calculate_seasonal_compatibility(crop_name, season, state_data)
-        scores['seasonal_compatibility'] = min(seasonal_score, 15)
-    else:
-        # If no season specified, give moderate score
-        scores['seasonal_compatibility'] = 7
-    
-    # 5. Market Factors (5% weight)
-    market_score = 0
-    investment_score = get_investment_score(crop_name)
-    market_price_score = get_market_price_score(crop_name)
-    
-    # Consider market factors
-    if market_price_score >= 80:
-        market_score += 3
-    elif market_price_score >= 60:
-        market_score += 2
-    
-    if investment_score <= 50:  # Lower investment is better for small farmers
-        market_score += 2
-    elif investment_score <= 70:
-        market_score += 1
-    
-    scores['market_factors'] = min(market_score, 5)
-    
-    # Calculate total weighted score
-    total_score = sum(scores.values())
-    
-    return {
-        'total_score': min(total_score, 100),
-        'detailed_scores': scores,
-        'recommendations': generate_recommendations(scores, crop_name, state_name)
-    }
-
-def get_neighboring_states(state_name):
-    """Get neighboring states for regional preference calculation."""
-    neighbors = {
-        "Andhra Pradesh": ["Telangana", "Karnataka", "Tamil Nadu", "Odisha"],
-        "Arunachal Pradesh": ["Assam", "Nagaland"],
-        "Assam": ["Arunachal Pradesh", "Nagaland", "Manipur", "Mizoram", "Tripura", "Meghalaya", "West Bengal"],
-        "Bihar": ["Uttar Pradesh", "Jharkhand", "West Bengal"],
-        "Chhattisgarh": ["Madhya Pradesh", "Maharashtra", "Telangana", "Odisha", "Jharkhand", "Uttar Pradesh"],
-        "Goa": ["Maharashtra", "Karnataka"],
-        "Gujarat": ["Rajasthan", "Madhya Pradesh", "Maharashtra"],
-        "Haryana": ["Punjab", "Himachal Pradesh", "Uttar Pradesh", "Rajasthan"],
-        "Himachal Pradesh": ["Punjab", "Haryana", "Uttarakhand", "Jammu and Kashmir"],
-        "Jharkhand": ["Bihar", "West Bengal", "Odisha", "Chhattisgarh", "Uttar Pradesh"],
-        "Karnataka": ["Maharashtra", "Goa", "Kerala", "Tamil Nadu", "Andhra Pradesh", "Telangana"],
-        "Kerala": ["Karnataka", "Tamil Nadu"],
-        "Madhya Pradesh": ["Rajasthan", "Uttar Pradesh", "Chhattisgarh", "Maharashtra", "Gujarat"],
-        "Maharashtra": ["Gujarat", "Madhya Pradesh", "Chhattisgarh", "Telangana", "Karnataka", "Goa"],
-        "Manipur": ["Nagaland", "Mizoram", "Assam"],
-        "Meghalaya": ["Assam"],
-        "Mizoram": ["Manipur", "Tripura", "Assam"],
-        "Nagaland": ["Arunachal Pradesh", "Assam", "Manipur"],
-        "Odisha": ["West Bengal", "Jharkhand", "Chhattisgarh", "Andhra Pradesh"],
-        "Punjab": ["Haryana", "Himachal Pradesh", "Rajasthan"],
-        "Rajasthan": ["Punjab", "Haryana", "Uttar Pradesh", "Madhya Pradesh", "Gujarat"],
-        "Sikkim": ["West Bengal"],
-        "Tamil Nadu": ["Kerala", "Karnataka", "Andhra Pradesh"],
-        "Telangana": ["Maharashtra", "Chhattisgarh", "Andhra Pradesh", "Karnataka"],
-        "Tripura": ["Assam", "Mizoram"],
-        "Uttar Pradesh": ["Uttarakhand", "Haryana", "Rajasthan", "Madhya Pradesh", "Chhattisgarh", "Jharkhand", "Bihar"],
-        "Uttarakhand": ["Himachal Pradesh", "Uttar Pradesh"],
-        "West Bengal": ["Sikkim", "Assam", "Bihar", "Jharkhand", "Odisha"]
-    }
-    return neighbors.get(state_name, [])
-
-def calculate_seasonal_compatibility(crop_name, season, state_data):
-    """Calculate seasonal compatibility score."""
-    seasonal_crops = {
-        'kharif': ['Rice', 'Maize', 'Cotton', 'Jute', 'Sugarcane', 'Pulses'],
-        'rabi': ['Wheat', 'Barley', 'Mustard', 'Peas', 'Lentil', 'Chickpea'],
-        'zaid': ['Watermelon', 'Muskmelon', 'Cucumber', 'Vegetables']
-    }
-    
-    if crop_name in seasonal_crops.get(season, []):
-        return 15
-    elif any(crop in crop_name for crop in seasonal_crops.get(season, [])):
-        return 10
-    else:
-        return 5
-
-def generate_recommendations(scores, crop_name, state_name):
-    """Generate specific recommendations based on scores."""
-    recommendations = []
-    
-    if scores['regional_preference'] < 15:
-        recommendations.append("This crop is not commonly grown in your region. Consider local alternatives.")
-    
-    if scores['climate_compatibility'] < 20:
-        recommendations.append("Climate conditions may not be optimal. Consider irrigation or shade structures.")
-    
-    if scores['soil_compatibility'] < 10:
-        recommendations.append("Soil type may require amendments. Consider soil testing and improvement.")
-    
-    if scores['seasonal_compatibility'] < 10:
-        recommendations.append("Current season may not be ideal. Plan for the next suitable season.")
-    
-    if scores['market_factors'] < 3:
-        recommendations.append("Market conditions may not be favorable. Research local demand.")
-    
-    if not recommendations:
-        recommendations.append("Excellent conditions for this crop! Follow standard best practices.")
-    
-    return recommendations
-
-def get_suitable_crops_for_location(state_name, limit=10):
-    """Get top suitable crops for a specific location."""
-    if state_name not in INDIAN_STATES:
-        return []
-    
-    crop_scores = []
-    for crop_name in CROP_INFO.keys():
-        suitability_result = calculate_location_suitability(crop_name, state_name)
-        if isinstance(suitability_result, dict):
-            score = suitability_result['total_score']
-        else:
-            score = suitability_result
-            
-        if score > 0:
-            crop_scores.append({
-                'crop_name': crop_name,
-                'suitability_score': score,
-                'image': CROP_INFO[crop_name].get('image', 'crop.png'),
-                'description': CROP_INFO[crop_name].get('description', ''),
-                'growing_season': CROP_INFO[crop_name].get('growing_season', ''),
-                'water_requirements': CROP_INFO[crop_name].get('water_requirements', ''),
-                'expected_yield': CROP_INFO[crop_name].get('expected_yield', ''),
-                'market_price': CROP_INFO[crop_name].get('market_price', '')
-            })
-    
-    # Sort by suitability score (descending) and return top results
-    crop_scores.sort(key=lambda x: x['suitability_score'], reverse=True)
-    return crop_scores[:limit]
-
-def get_user_location_from_ip():
-    """Get user's approximate location from IP address."""
-    try:
-        print("Attempting to get location from IP...")
-        # Try multiple location services for better accuracy
-        response = requests.get(LOCATION_SERVICES["ipapi"], timeout=5)
-        print(f"Location API response status: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"Location API data: {data}")
-            
-            if data.get('status') == 'success':
-                location_data = {
-                    'city': data.get('city', ''),
-                    'region': data.get('regionName', ''),
-                    'country': data.get('country', ''),
-                    'lat': data.get('lat', 0),
-                    'lon': data.get('lon', 0),
-                    'timezone': data.get('timezone', '')
-                }
-                print(f"Location detected: {location_data}")
-                return location_data
-            else:
-                print(f"Location API returned status: {data.get('status')}")
-        else:
-            print(f"Location API failed with status: {response.status_code}")
-    except Exception as e:
-        print(f"Error getting location from IP: {e}")
-    
-    return None
-
-def get_weather_data(lat, lon):
-    """Get current weather data for given coordinates."""
-    try:
-        params = {
-            'lat': lat,
-            'lon': lon,
-            'appid': WEATHER_API_KEY,
-            'units': 'metric'  # Use Celsius
-        }
-        response = requests.get(WEATHER_BASE_URL, params=params, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            return {
-                'temperature': data['main']['temp'],
-                'humidity': data['main']['humidity'],
-                'pressure': data['main']['pressure'],
-                'description': data['weather'][0]['description'],
-                'wind_speed': data['wind']['speed'],
-                'visibility': data.get('visibility', 10000),
-                'clouds': data['clouds']['all'],
-                'sunrise': data['sys']['sunrise'],
-                'sunset': data['sys']['sunset']
-            }
-    except Exception as e:
-        print(f"Error getting weather data: {e}")
-    
-    return None
-
-def get_weather_forecast(lat, lon):
-    """Get 5-day weather forecast."""
-    try:
-        forecast_url = "http://api.openweathermap.org/data/2.5/forecast"
-        params = {
-            'lat': lat,
-            'lon': lon,
-            'appid': WEATHER_API_KEY,
-            'units': 'metric'
-        }
-        response = requests.get(forecast_url, params=params, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            return data['list'][:5]  # Return next 5 days
-    except Exception as e:
-        print(f"Error getting weather forecast: {e}")
-    
-    return None
-
-def map_weather_to_climate_zone(weather_data):
-    """Map current weather conditions to climate zones."""
-    if not weather_data:
-        return 'moderate'
-    
-    temp = weather_data['temperature']
-    humidity = weather_data['humidity']
-    
-    # Temperature-based classification
-    if temp >= 30:
-        temp_zone = 'hot'
-    elif temp >= 20:
-        temp_zone = 'moderate'
-    elif temp >= 10:
-        temp_zone = 'cool'
-    else:
-        temp_zone = 'cold'
-    
-    # Humidity-based classification
-    if humidity >= 80:
-        humidity_level = 'very_high'
-    elif humidity >= 60:
-        humidity_level = 'high'
-    elif humidity >= 40:
-        humidity_level = 'moderate'
-    else:
-        humidity_level = 'low'
-    
-    return {
-        'temperature_zone': temp_zone,
-        'humidity_level': humidity_level,
-        'current_temp': temp,
-        'current_humidity': humidity
-    }
-
-def find_nearest_state(lat, lon):
-    """Find the nearest Indian state based on coordinates."""
-    # Approximate coordinates of Indian states (simplified)
-    state_coordinates = {
-        "Andhra Pradesh": (15.9129, 79.7400),
-        "Arunachal Pradesh": (28.2180, 94.7278),
-        "Assam": (26.2006, 92.9376),
-        "Bihar": (25.0961, 85.3131),
-        "Chhattisgarh": (21.2787, 81.8661),
-        "Goa": (15.2993, 74.1240),
-        "Gujarat": (22.2587, 71.1924),
-        "Haryana": (29.0588, 76.0856),
-        "Himachal Pradesh": (31.1048, 77.1734),
-        "Jharkhand": (23.6102, 85.2799),
-        "Karnataka": (15.3173, 75.7139),
-        "Kerala": (10.8505, 76.2711),
-        "Madhya Pradesh": (23.5937, 78.9629),
-        "Maharashtra": (19.7515, 75.7139),
-        "Manipur": (24.6637, 93.9063),
-        "Meghalaya": (25.4670, 91.3662),
-        "Mizoram": (23.1645, 92.9376),
-        "Nagaland": (26.1584, 94.5624),
-        "Odisha": (20.9517, 85.0985),
-        "Punjab": (31.1471, 75.3412),
-        "Rajasthan": (27.0238, 74.2179),
-        "Sikkim": (27.5330, 88.5122),
-        "Tamil Nadu": (11.1271, 78.6569),
-        "Telangana": (18.1124, 79.0193),
-        "Tripura": (23.9408, 91.9882),
-        "Uttar Pradesh": (26.8467, 80.9462),
-        "Uttarakhand": (30.0668, 79.0193),
-        "West Bengal": (22.9868, 87.8550)
-    }
-    
-    min_distance = float('inf')
-    nearest_state = None
-    
-    for state, (state_lat, state_lon) in state_coordinates.items():
-        # Calculate distance using Haversine formula
-        distance = calculate_distance(lat, lon, state_lat, state_lon)
-        if distance < min_distance:
-            min_distance = distance
-            nearest_state = state
-    
-    return nearest_state, min_distance
-
-def calculate_distance(lat1, lon1, lat2, lon2):
-    """Calculate distance between two coordinates using Haversine formula."""
-    import math
-    
-    R = 6371  # Earth's radius in kilometers
-    
-    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-    c = 2 * math.asin(math.sqrt(a))
-    
-    return R * c
-
-def get_auto_location_data():
-    """Get user's location and weather data automatically."""
-    try:
-        # Get location from IP
-        location_data = get_user_location_from_ip()
-        if not location_data:
+    def get_live_price(self, crop_name):
+        """Get current live price with realistic variations"""
+        if crop_name not in self.base_prices:
             return None
         
-        # Get weather data (with fallback)
-        weather_data = get_weather_data(location_data['lat'], location_data['lon'])
+        base_price = self.base_prices[crop_name]
         
-        # Find nearest Indian state
-        nearest_state, distance = find_nearest_state(location_data['lat'], location_data['lon'])
+        # Simulate market volatility
+        current_hour = datetime.now().hour
         
-        # Map weather to climate zone (with fallback)
-        climate_zone = map_weather_to_climate_zone(weather_data) if weather_data else {
-            'temperature_zone': 'moderate',
-            'humidity_level': 'moderate',
-            'current_temp': 25,  # Default temperature
-            'current_humidity': 60  # Default humidity
-        }
+        # Different volatility patterns throughout the day
+        if 9 <= current_hour <= 17:  # Market hours - higher volatility
+            variation = random.uniform(-0.05, 0.05)  # ±5% during market hours
+        else:  # Off hours - lower volatility
+            variation = random.uniform(-0.02, 0.02)  # ±2% off hours
         
-        return {
-            'location': location_data,
-            'weather': weather_data,
-            'nearest_state': nearest_state,
-            'distance_km': distance,
-            'climate_zone': climate_zone
-        }
-    except Exception as e:
-        print(f"Error in auto location detection: {e}")
-        return None
-
-@app.route('/api/auto-detect')
-def auto_detect_location():
-    """Automatically detect user's location and get weather data."""
-    try:
-        print("Auto-detection requested...")
-        auto_data = get_auto_location_data()
-        if not auto_data:
-            print("Auto-detection failed - no data returned")
-            return jsonify({"error": "Could not detect location automatically"}), 400
+        # Add some trend-based variation
+        trend_factor = random.choice([-0.02, -0.01, 0, 0.01, 0.02])
         
-        print(f"Auto-detection successful: {auto_data['nearest_state']}")
-        return jsonify(auto_data)
-    except Exception as e:
-        print(f"Auto-detection error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/weather-based-recommendations')
-def get_weather_based_recommendations():
-    """Get crop recommendations based on current weather conditions."""
-    try:
-        # Get auto-detected data
-        auto_data = get_auto_location_data()
-        if not auto_data:
-            return jsonify({"error": "Could not detect location automatically"}), 400
+        live_price = int(base_price * (1 + variation + trend_factor))
+        return max(live_price, int(base_price * 0.8))  # Ensure price doesn't drop too much
+    
+    def get_live_trend(self, crop_name):
+        """Get live trend based on recent price movements"""
+        if crop_name not in self.price_history:
+            return "stable", 0
         
-        weather_data = auto_data['weather']
-        nearest_state = auto_data['nearest_state']
-        climate_zone = auto_data['climate_zone']
+        recent_prices = self.price_history[crop_name][-3:]  # Last 3 months
+        if len(recent_prices) < 2:
+            return "stable", 0
         
-        if not nearest_state:
-            return jsonify({"error": "Could not determine nearest state"}), 400
+        old_price = recent_prices[0]["price"]
+        new_price = recent_prices[-1]["price"]
         
-        # Get base recommendations for the nearest state
-        base_recommendations = get_suitable_crops_for_location(nearest_state, limit=20)
+        change_percent = ((new_price - old_price) / old_price) * 100
         
-        # Adjust scores based on current weather (or use base scores if weather not available)
-        weather_adjusted_recommendations = []
-        for crop in base_recommendations:
-            if weather_data:
-                adjusted_score = adjust_score_for_weather(crop['crop_name'], weather_data, climate_zone)
-            else:
-                # Use base suitability score if weather data not available
-                adjusted_score = crop['suitability_score']
+        if change_percent > 3:
+            return "increasing", round(change_percent, 1)
+        elif change_percent < -3:
+            return "decreasing", round(change_percent, 1)
+        else:
+            return "stable", round(change_percent, 1)
+    
+    def update_prices(self):
+        """Update all prices with live data"""
+        updated_data = {}
+        
+        for crop_name in self.base_prices.keys():
+            live_price = self.get_live_price(crop_name)
+            trend, change_percent = self.get_live_trend(crop_name)
             
-            crop['weather_adjusted_score'] = adjusted_score
-            crop['weather_conditions'] = {
-                'current_temp': climate_zone['current_temp'],
-                'current_humidity': climate_zone['current_humidity'],
-                'weather_description': weather_data['description'] if weather_data else 'Weather data not available',
-                'climate_zone': climate_zone
+            # Update price history
+            current_month = datetime.now().strftime("%Y-%m")
+            if not self.price_history[crop_name] or self.price_history[crop_name][-1]["date"] != current_month:
+                self.price_history[crop_name].append({
+                    "date": current_month,
+                    "price": live_price
+                })
+                # Keep only last 6 months
+                if len(self.price_history[crop_name]) > 6:
+                    self.price_history[crop_name] = self.price_history[crop_name][-6:]
+            
+            # Determine volatility based on price stability
+            price_variations = [abs(p["price"] - live_price) for p in self.price_history[crop_name][-3:]]
+            avg_variation = sum(price_variations) / len(price_variations) if price_variations else 0
+            variation_percent = (avg_variation / live_price) * 100
+            
+            if variation_percent < 5:
+                volatility = "low"
+            elif variation_percent < 10:
+                volatility = "medium"
+            elif variation_percent < 15:
+                volatility = "high"
+            else:
+                volatility = "very_high"
+            
+            updated_data[crop_name] = {
+                "current_price": live_price,
+                "unit": "per quintal",
+                "trend": trend,
+                "change_percent": change_percent,
+                "price_history": self.price_history[crop_name][-5:],  # Last 5 months
+                "seasonal_pattern": MARKET_DATA[crop_name]["seasonal_pattern"],
+                "demand_factors": MARKET_DATA[crop_name]["demand_factors"],
+                "supply_factors": MARKET_DATA[crop_name]["supply_factors"],
+                "market_centers": MARKET_DATA[crop_name]["market_centers"],
+                "export_markets": MARKET_DATA[crop_name]["export_markets"],
+                "min_support_price": MARKET_DATA[crop_name]["min_support_price"],
+                "max_price": MARKET_DATA[crop_name]["max_price"],
+                "volatility": volatility,
+                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
-            weather_adjusted_recommendations.append(crop)
         
-        # Sort by weather-adjusted score
-        weather_adjusted_recommendations.sort(key=lambda x: x['weather_adjusted_score'], reverse=True)
-        
-        return jsonify({
-            'auto_detected_data': auto_data,
-            'recommendations': weather_adjusted_recommendations[:15],
-            'weather_summary': {
-                'temperature': f"{climate_zone['current_temp']}°C",
-                'humidity': f"{climate_zone['current_humidity']}%",
-                'description': weather_data['description'] if weather_data else 'Weather data not available',
-                'nearest_state': nearest_state,
-                'distance_km': round(auto_data['distance_km'], 1)
-            }
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        self.last_update = datetime.now()
+        return updated_data
 
-def adjust_score_for_weather(crop_name, weather_data, climate_zone):
-    """Adjust crop suitability score based on current weather conditions."""
-    base_score = 50  # Start with base score
-    
-    temp = weather_data['temperature']
-    humidity = weather_data['humidity']
-    
-    # Get crop's climate preferences
-    temp_suitability = get_climate_suitability(crop_name, 'temperature')
-    humidity_suitability = get_climate_suitability(crop_name, 'humidity')
-    
-    # Temperature adjustment
-    if temp_suitability >= 8:  # Crop prefers high temperature
-        if temp >= 25:
-            base_score += 20
-        elif temp >= 20:
-            base_score += 10
-        else:
-            base_score -= 10
-    elif temp_suitability <= 5:  # Crop prefers cool temperature
-        if temp <= 20:
-            base_score += 20
-        elif temp <= 25:
-            base_score += 10
-        else:
-            base_score -= 10
-    else:  # Moderate temperature preference
-        if 15 <= temp <= 30:
-            base_score += 15
-        else:
-            base_score -= 5
-    
-    # Humidity adjustment
-    if humidity_suitability >= 8:  # Crop prefers high humidity
-        if humidity >= 70:
-            base_score += 15
-        elif humidity >= 50:
-            base_score += 5
-        else:
-            base_score -= 10
-    elif humidity_suitability <= 5:  # Crop prefers low humidity
-        if humidity <= 50:
-            base_score += 15
-        elif humidity <= 70:
-            base_score += 5
-        else:
-            base_score -= 10
-    else:  # Moderate humidity preference
-        if 40 <= humidity <= 80:
-            base_score += 10
-        else:
-            base_score -= 5
-    
-    # Weather description adjustment
-    weather_desc = weather_data['description'].lower()
-    if 'rain' in weather_desc or 'drizzle' in weather_desc:
-        # Good for most crops
-        base_score += 10
-    elif 'clear' in weather_desc or 'sunny' in weather_desc:
-        # Good for sun-loving crops
-        if get_climate_suitability(crop_name, 'sunlight') >= 7:
-            base_score += 10
-    elif 'cloudy' in weather_desc:
-        # Moderate for most crops
-        base_score += 5
-    
-    return max(0, min(100, base_score))  # Ensure score is between 0-100
+# Initialize live market data
+live_market = LiveMarketData()
 
-@app.route('/api/smart-recommend', methods=['POST'])
-def smart_recommend():
-    try:
-        data = request.get_json()
-        # 1. Soil/Nutrient ML prediction
-        soil_features = []
-        for key in ['Nitrogen', 'Phosporus', 'Potassium', 'Temperature', 'Humidity', 'pH', 'Rainfall']:
-            val = data.get(key)
-            if val is None or val == '':
-                soil_features.append(0)
-            else:
-                soil_features.append(float(val))
-        ml_pred = model.predict(sc.transform(mx.transform([soil_features])))[0]
-        crop_dict = {1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
-                     8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
-                     14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
-                     19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"}
-        ml_crop = crop_dict.get(ml_pred, None)
-        # 2. Local suitability
-        state = data.get('state')
-        season = data.get('season')
-        local_scores = {}
-        for crop in CROP_INFO.keys():
-            local_result = calculate_location_suitability(crop, state, season) if state else {'total_score': 50}
-            local_scores[crop] = local_result['total_score'] if isinstance(local_result, dict) else local_result
-        # 3. Weather adjustment
-        temp = float(data.get('Temperature', 0))
-        humidity = float(data.get('Humidity', 0))
-        weather_scores = {}
-        for crop in CROP_INFO.keys():
-            temp_suit = get_climate_suitability(crop, 'temperature')
-            hum_suit = get_climate_suitability(crop, 'humidity')
-            score = 0
-            if temp_suit >= 8 and temp >= 25:
-                score += 10
-            elif temp_suit <= 5 and temp <= 20:
-                score += 10
-            else:
-                score += 5
-            if hum_suit >= 8 and humidity >= 70:
-                score += 10
-            elif hum_suit <= 5 and humidity <= 50:
-                score += 10
-            else:
-                score += 5
-            weather_scores[crop] = score
-        # 4. Season fit
-        season_scores = {}
-        for crop in CROP_INFO.keys():
-            if season:
-                season_scores[crop] = calculate_seasonal_compatibility(crop, season, INDIAN_STATES.get(state, {}))
-            else:
-                season_scores[crop] = 7
-        # 5. Profitability
-        profit_scores = {}
-        area = float(data.get('area', 0) or 0)
-        costs = float(data.get('costs', 0) or 0)
-        for crop in CROP_INFO.keys():
-            try:
-                avg_yield = parse_range(CROP_INFO[crop].get('expected_yield', '0'))
-                avg_price = parse_range(CROP_INFO[crop].get('market_price', '0'))
-                total_yield = avg_yield * area if area else 0
-                gross_revenue = total_yield * avg_price
-                net_profit = gross_revenue - costs if area and costs else 0
-                score = 10 if net_profit > 0 else 5
-                profit_scores[crop] = score
-            except:
-                profit_scores[crop] = 5
-        # Weighted sum for all crops
-        crop_results = []
-        for crop in CROP_INFO.keys():
-            ml_score = 100 if crop == ml_crop else 60
-            local_score = local_scores.get(crop, 50)
-            weather_score = weather_scores.get(crop, 10)
-            season_score = season_scores.get(crop, 7)
-            profit_score = profit_scores.get(crop, 5)
-            total = (ml_score*0.3 + local_score*0.25 + weather_score*0.2 + season_score*0.1 + profit_score*0.15)
-            avg_yield = parse_range(CROP_INFO[crop].get('expected_yield', '0'))
-            avg_price = parse_range(CROP_INFO[crop].get('market_price', '0'))
-            total_yield = avg_yield * area if area else 0
-            gross_revenue = total_yield * avg_price
-            estimated_profit = gross_revenue - costs if area and costs else None
-            crop_results.append({
-                'crop': crop,
-                'total_score': int(round(total)),
-                'breakdown': {
-                    'soil_score': ml_score,
-                    'local_score': local_score,
-                    'weather_score': weather_score,
-                    'season_score': season_score,
-                    'profit_score': profit_score
-                },
-                'estimated_profit': int(estimated_profit) if estimated_profit is not None else None,
-                'description': CROP_INFO[crop].get('description', ''),
-                'image': CROP_INFO[crop].get('image', 'crop.png')
-            })
-        # Sort and pick top 3
-        crop_results.sort(key=lambda x: x['total_score'], reverse=True)
-        top_crops = crop_results[:3]
-        return jsonify({'top_crops': top_crops})
-    except Exception as e:
-        return jsonify({'error': f'Error in recommendation: {str(e)}'})
+@app.route('/api/market/trends')
+def api_market_trends():
+    """Get live market trends for all crops or specific crop"""
+    crop_name = request.args.get('crop')
+    period = request.args.get('period', '6months')
+    
+    # Get live data
+    live_data = live_market.update_prices()
+    
+    if crop_name:
+        if crop_name in live_data:
+            return jsonify({"trends": live_data[crop_name]})
+        else:
+            return jsonify({"error": "Crop not found"}), 404
+    
+    return jsonify({"trends": live_data})
 
-@app.route('/api/schemes')
-def get_schemes():
-    schemes = [
-        {
-            'name': 'PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)',
-            'description': 'Income support of ₹6,000/year to all farmer families in three equal installments.',
-            'eligibility': 'All small and marginal farmers (landholding up to 2 hectares).',
-            'benefits': 'Direct cash transfer to bank account.',
-            'link': 'https://pmkisan.gov.in/',
-            'states': 'all',
-            'crops': 'all'
-        },
-        {
-            'name': 'PMFBY (Pradhan Mantri Fasal Bima Yojana)',
-            'description': 'Crop insurance scheme for farmers against crop loss due to natural calamities. Covers all major crops.',
-            'eligibility': 'All farmers growing notified crops in notified areas.',
-            'benefits': 'Low premium insurance for crops.',
-            'link': 'https://pmfby.gov.in/',
-            'states': 'all',
-            'crops': 'all'
-        },
-        {
-            'name': 'Soil Health Card Scheme',
-            'description': 'Provides soil health cards to farmers with crop-wise recommendations of nutrients and fertilizers.',
-            'eligibility': 'All farmers.',
-            'benefits': 'Improved soil fertility and productivity.',
-            'link': 'https://soilhealth.dac.gov.in/',
-            'states': 'all',
-            'crops': 'all'
-        },
-        {
-            'name': 'Kisan Credit Card (KCC)',
-            'description': 'Provides timely access to credit for farmers for their cultivation and other needs.',
-            'eligibility': 'All farmers (individuals/joint borrowers/tenant farmers/sharecroppers).',
-            'benefits': 'Short-term credit at low interest rates.',
-            'link': 'https://pmkisan.gov.in/Documents/KCC.pdf',
-            'states': 'all',
-            'crops': 'all'
-        },
-        {
-            'name': 'National Food Security Mission (NFSM)',
-            'description': 'Increase production of rice, wheat, pulses, coarse cereals & commercial crops.',
-            'eligibility': 'Farmers growing targeted crops.',
-            'benefits': 'Subsidies on seeds, fertilizers, and machinery.',
-            'link': 'https://nfsm.gov.in/',
-            'states': 'all',
-            'crops': ['rice', 'wheat', 'pulses', 'coarse cereals', 'commercial crops']
-        },
-        {
-            'name': 'Rashtriya Krishi Vikas Yojana (RKVY)',
-            'description': 'Provides states with funds to develop agriculture and allied sectors.',
-            'eligibility': 'State governments, farmers benefit via state projects.',
-            'benefits': 'Subsidies, infrastructure, and training.',
-            'link': 'https://rkvy.nic.in/',
-            'states': ['Maharashtra', 'Gujarat', 'Punjab', 'Karnataka', 'Tamil Nadu', 'all'],
-            'crops': 'all'
-        },
-        {
-            'name': 'Mukhya Mantri Krishi Ashirwad Yojana',
-            'description': 'Jharkhand state scheme: ₹5,000/acre/year to small and marginal farmers.',
-            'eligibility': 'Small and marginal farmers of Jharkhand.',
-            'benefits': 'Direct cash transfer.',
-            'link': 'https://mmkay.jharkhand.gov.in/',
-            'states': ['Jharkhand'],
-            'crops': 'all'
-        },
-        {
-            'name': 'Telangana Rythu Bandhu',
-            'description': 'Telangana state scheme: Investment support of ₹5,000/acre/season to all farmers.',
-            'eligibility': 'All farmers of Telangana.',
-            'benefits': 'Direct cash transfer.',
-            'link': 'https://rythubandhu.telangana.gov.in/',
-            'states': ['Telangana'],
-            'crops': 'all'
-        }
-    ]
-    state = request.args.get('state')
-    crop = request.args.get('crop')
-    filtered = []
-    for scheme in schemes:
-        # State filter
-        if state and scheme['states'] != 'all':
-            if isinstance(scheme['states'], list):
-                if state not in scheme['states'] and 'all' not in scheme['states']:
-                    continue
-            elif scheme['states'] != state:
-                continue
-        # Crop filter
-        if crop and scheme['crops'] != 'all':
-            crop_lower = crop.lower()
-            if isinstance(scheme['crops'], list):
-                if not any(crop_lower in c.lower() for c in scheme['crops']):
-                    continue
-            elif crop_lower not in scheme['crops'].lower():
-                continue
-        # Also allow crop filter to match in description
-        if crop and scheme['crops'] == 'all':
-            if crop.lower() not in scheme['description'].lower():
-                continue
-        filtered.append(scheme)
-    if not state and not crop:
-        filtered = schemes
-    return jsonify({'schemes': filtered})
+@app.route('/api/market/live-update')
+def api_live_update():
+    """Get live market update with timestamp"""
+    live_data = live_market.update_prices()
+    
+    return jsonify({
+        "live_data": live_data,
+        "last_updated": live_market.last_update.strftime("%Y-%m-%d %H:%M:%S"),
+        "next_update": (live_market.last_update + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
