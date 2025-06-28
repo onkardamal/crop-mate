@@ -1246,5 +1246,109 @@ def smart_recommend():
     except Exception as e:
         return jsonify({'error': f'Error in recommendation: {str(e)}'})
 
+@app.route('/api/schemes')
+def get_schemes():
+    schemes = [
+        {
+            'name': 'PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)',
+            'description': 'Income support of ₹6,000/year to all farmer families in three equal installments.',
+            'eligibility': 'All small and marginal farmers (landholding up to 2 hectares).',
+            'benefits': 'Direct cash transfer to bank account.',
+            'link': 'https://pmkisan.gov.in/',
+            'states': 'all',
+            'crops': 'all'
+        },
+        {
+            'name': 'PMFBY (Pradhan Mantri Fasal Bima Yojana)',
+            'description': 'Crop insurance scheme for farmers against crop loss due to natural calamities. Covers all major crops.',
+            'eligibility': 'All farmers growing notified crops in notified areas.',
+            'benefits': 'Low premium insurance for crops.',
+            'link': 'https://pmfby.gov.in/',
+            'states': 'all',
+            'crops': 'all'
+        },
+        {
+            'name': 'Soil Health Card Scheme',
+            'description': 'Provides soil health cards to farmers with crop-wise recommendations of nutrients and fertilizers.',
+            'eligibility': 'All farmers.',
+            'benefits': 'Improved soil fertility and productivity.',
+            'link': 'https://soilhealth.dac.gov.in/',
+            'states': 'all',
+            'crops': 'all'
+        },
+        {
+            'name': 'Kisan Credit Card (KCC)',
+            'description': 'Provides timely access to credit for farmers for their cultivation and other needs.',
+            'eligibility': 'All farmers (individuals/joint borrowers/tenant farmers/sharecroppers).',
+            'benefits': 'Short-term credit at low interest rates.',
+            'link': 'https://pmkisan.gov.in/Documents/KCC.pdf',
+            'states': 'all',
+            'crops': 'all'
+        },
+        {
+            'name': 'National Food Security Mission (NFSM)',
+            'description': 'Increase production of rice, wheat, pulses, coarse cereals & commercial crops.',
+            'eligibility': 'Farmers growing targeted crops.',
+            'benefits': 'Subsidies on seeds, fertilizers, and machinery.',
+            'link': 'https://nfsm.gov.in/',
+            'states': 'all',
+            'crops': ['rice', 'wheat', 'pulses', 'coarse cereals', 'commercial crops']
+        },
+        {
+            'name': 'Rashtriya Krishi Vikas Yojana (RKVY)',
+            'description': 'Provides states with funds to develop agriculture and allied sectors.',
+            'eligibility': 'State governments, farmers benefit via state projects.',
+            'benefits': 'Subsidies, infrastructure, and training.',
+            'link': 'https://rkvy.nic.in/',
+            'states': ['Maharashtra', 'Gujarat', 'Punjab', 'Karnataka', 'Tamil Nadu', 'all'],
+            'crops': 'all'
+        },
+        {
+            'name': 'Mukhya Mantri Krishi Ashirwad Yojana',
+            'description': 'Jharkhand state scheme: ₹5,000/acre/year to small and marginal farmers.',
+            'eligibility': 'Small and marginal farmers of Jharkhand.',
+            'benefits': 'Direct cash transfer.',
+            'link': 'https://mmkay.jharkhand.gov.in/',
+            'states': ['Jharkhand'],
+            'crops': 'all'
+        },
+        {
+            'name': 'Telangana Rythu Bandhu',
+            'description': 'Telangana state scheme: Investment support of ₹5,000/acre/season to all farmers.',
+            'eligibility': 'All farmers of Telangana.',
+            'benefits': 'Direct cash transfer.',
+            'link': 'https://rythubandhu.telangana.gov.in/',
+            'states': ['Telangana'],
+            'crops': 'all'
+        }
+    ]
+    state = request.args.get('state')
+    crop = request.args.get('crop')
+    filtered = []
+    for scheme in schemes:
+        # State filter
+        if state and scheme['states'] != 'all':
+            if isinstance(scheme['states'], list):
+                if state not in scheme['states'] and 'all' not in scheme['states']:
+                    continue
+            elif scheme['states'] != state:
+                continue
+        # Crop filter
+        if crop and scheme['crops'] != 'all':
+            crop_lower = crop.lower()
+            if isinstance(scheme['crops'], list):
+                if not any(crop_lower in c.lower() for c in scheme['crops']):
+                    continue
+            elif crop_lower not in scheme['crops'].lower():
+                continue
+        # Also allow crop filter to match in description
+        if crop and scheme['crops'] == 'all':
+            if crop.lower() not in scheme['description'].lower():
+                continue
+        filtered.append(scheme)
+    if not state and not crop:
+        filtered = schemes
+    return jsonify({'schemes': filtered})
+
 if __name__ == "__main__":
     app.run(debug=True)
