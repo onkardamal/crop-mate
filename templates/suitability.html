@@ -6,182 +6,179 @@
     <title>CropMate - Local Suitability</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            min-height: 100vh;
-        }
-        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container { 
-            background: #ffffff; 
-            border-radius: 15px; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.1); 
-            padding: 2rem; 
-            margin-top: 2rem; 
-            margin-bottom: 2rem; 
-        }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 2rem; }
         .location-selector {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            background: var(--gradient-primary);
+            color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
         }
+        
         .crop-card {
             border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            margin-bottom: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-normal);
+            margin-bottom: var(--spacing-md);
             cursor: pointer;
+            background: var(--white);
         }
+        
         .crop-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
         }
+        
         .crop-image {
             width: 80px;
             height: 80px;
             object-fit: cover;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
         }
+        
         .suitability-score {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #28a745;
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--success);
         }
-        .score-excellent { color: #28a745; }
-        .score-good { color: #ffc107; }
-        .score-fair { color: #fd7e14; }
-        .score-poor { color: #dc3545; }
+        
+        .score-excellent { color: var(--success); }
+        .score-good { color: var(--warning); }
+        .score-fair { color: var(--secondary-color); }
+        .score-poor { color: var(--danger); }
+        
         .state-info {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            background: var(--gradient-light);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
         }
+        
         .climate-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 0.5rem 1rem;
-            margin: 0.25rem;
+            background: var(--gradient-primary);
+            color: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            margin: var(--spacing-xs);
             display: inline-block;
+            font-weight: 500;
         }
+        
         .analysis-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
+            background: var(--light-gray);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+            border-left: 4px solid var(--primary-color);
         }
+        
         .progress-custom {
             height: 25px;
-            border-radius: 15px;
-            background: #e9ecef;
+            border-radius: var(--radius-xl);
+            background: var(--light-gray);
         }
+        
         .progress-custom .progress-bar {
-            border-radius: 15px;
-            font-weight: bold;
+            border-radius: var(--radius-xl);
+            font-weight: 600;
         }
+        
         .loading-spinner {
             display: none;
             text-align: center;
-            padding: 2rem;
+            padding: var(--spacing-lg);
         }
+        
         .no-results {
             text-align: center;
-            padding: 3rem;
-            color: #6c757d;
+            padding: var(--spacing-xl);
+            color: var(--gray);
         }
+        
         .map-container {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 2rem;
+            background: var(--light-gray);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
         }
+        
         .region-highlight {
             background: linear-gradient(135deg, #d4edda, #c3e6cb);
             border: 1px solid #c3e6cb;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            color: #155724;
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+            color: var(--success);
             font-weight: 500;
         }
+        
         .weather-badge {
             text-align: center;
-            transition: transform 0.2s;
+            transition: var(--transition-fast);
         }
+        
         .weather-badge:hover {
             transform: translateY(-2px);
         }
+        
         .weather-badge h6 {
-            margin-bottom: 5px;
-            font-size: 0.9rem;
+            margin-bottom: var(--spacing-xs);
+            font-size: var(--font-size-sm);
         }
+        
         .weather-badge h4 {
             margin: 0;
-            font-weight: bold;
+            font-weight: 700;
         }
+        
         .auto-detection-section .card {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-normal);
         }
+        
         .auto-detection-section .card:hover {
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-md);
         }
+        
         .manual-selection-section .card {
             border-style: dashed;
-            background-color: #f8f9fa;
+            background-color: var(--light-gray);
         }
+        
         .weather-summary {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
+            background: var(--gradient-light);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
         }
+        
         .crop-card .weather-conditions {
-            font-size: 0.8rem;
-            color: #6c757d;
+            font-size: var(--font-size-sm);
+            color: var(--gray);
         }
+        
         .crop-card .weather-conditions i {
-            margin-right: 2px;
+            margin-right: var(--spacing-xs);
         }
-        .analysis-card {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 4px solid #007bff;
-        }
+        
         .analysis-card h5 {
-            color: #495057;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
+            color: var(--dark-gray);
+            margin-bottom: var(--spacing-sm);
+            font-size: var(--font-size-lg);
         }
+        
         .analysis-card h6 {
-            color: #6c757d;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        .alert {
-            border-radius: 8px;
-            border: none;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .btn-close {
-            opacity: 0.7;
-        }
-        .btn-close:hover {
-            opacity: 1;
+            color: var(--gray);
+            margin-bottom: var(--spacing-xs);
+            font-size: var(--font-size-sm);
         }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <i class="bi bi-flower1"></i> CropMate
@@ -207,10 +204,10 @@
 </nav>
 
 <div class="container">
-    <h1><i class="bi bi-geo-alt" aria-label="Location icon"></i> Local Suitability <span class="text-success">🗺️</span></h1>
-    <p class="lead text-center mb-4">
-        Discover which crops are best suited for your state based on climate, soil, and regional conditions. Get personalized recommendations for optimal farming success!
-    </p>
+    <div class="page-header">
+        <h1><i class="bi bi-geo-alt"></i> Local Suitability</h1>
+        <p class="subtitle">Discover which crops are best suited for your state based on climate, soil, and regional conditions</p>
+    </div>
     
     <!-- Auto Detection Section -->
     <div class="auto-detection-section mb-4">

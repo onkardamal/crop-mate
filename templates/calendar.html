@@ -6,30 +6,132 @@
     <title>CropMate - Seasonal Calendar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        body { background: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container { background: #ffffff; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.05); padding: 2rem; margin-top: 2rem; margin-bottom: 2rem; }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 2rem; }
-        .calendar-table th, .calendar-table td { text-align: center; vertical-align: middle; padding: 0.5rem; }
-        .calendar-table th { background-color: #f8f9fa; font-weight: 600; }
-        .sowing { background-color: #d1e7dd !important; color: #0f5132; font-weight: 500; }
-        .growing { background-color: #fff3cd !important; color: #664d03; font-weight: 500; }
-        .harvesting { background-color: #f8d7da !important; color: #721c24; font-weight: 500; }
-        .current-month { border: 3px solid #0d6efd !important; font-weight: bold; }
-        .crop-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 0.5rem; border: 2px solid #dee2e6; }
-        .filter-btn.active { font-weight: bold; border-width: 2px; }
-        .legend .badge { margin-right: 10px; padding: 0.5rem 1rem; font-size: 0.9rem; }
-        .month-cell { min-width: 60px; height: 40px; position: relative; }
-        .month-cell:hover { opacity: 0.8; cursor: pointer; }
-        .table-responsive { border-radius: 10px; overflow: hidden; }
-        .calendar-table { margin-bottom: 0; }
-        .btn-group .btn { border-radius: 0.375rem; margin: 0 2px; }
-        .spinner-border-sm { width: 1rem; height: 1rem; }
+        .calendar-container {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .calendar-table th, .calendar-table td { 
+            text-align: center; 
+            vertical-align: middle; 
+            padding: var(--spacing-sm); 
+        }
+        
+        .calendar-table th { 
+            background: var(--gradient-light);
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+        
+        .sowing { 
+            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%) !important; 
+            color: var(--success); 
+            font-weight: 500; 
+        }
+        
+        .growing { 
+            background: linear-gradient(135deg, #FFF3CD 0%, #FFEAA7 100%) !important; 
+            color: var(--warning); 
+            font-weight: 500; 
+        }
+        
+        .harvesting { 
+            background: linear-gradient(135deg, #F8D7DA 0%, #F5C6CB 100%) !important; 
+            color: var(--danger); 
+            font-weight: 500; 
+        }
+        
+        .current-month { 
+            border: 3px solid var(--primary-color) !important; 
+            font-weight: bold; 
+        }
+        
+        .crop-img { 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            margin-right: var(--spacing-xs); 
+            border: 2px solid var(--light-gray); 
+        }
+        
+        .filter-btn.active { 
+            font-weight: bold; 
+            border-width: 2px; 
+            background: var(--primary-color);
+            color: var(--white);
+        }
+        
+        .legend .badge { 
+            margin-right: var(--spacing-sm); 
+            padding: var(--spacing-sm) var(--spacing-md); 
+            font-size: var(--font-size-sm); 
+        }
+        
+        .month-cell { 
+            min-width: 60px; 
+            height: 40px; 
+            position: relative; 
+            border-radius: var(--radius-sm);
+        }
+        
+        .month-cell:hover { 
+            opacity: 0.8; 
+            cursor: pointer; 
+            transform: scale(1.05);
+            transition: var(--transition-fast);
+        }
+        
+        .table-responsive { 
+            border-radius: var(--radius-md); 
+            overflow: hidden; 
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .calendar-table { 
+            margin-bottom: 0; 
+        }
+        
+        .btn-group .btn { 
+            border-radius: var(--radius-sm); 
+            margin: 0 2px; 
+        }
+        
+        .spinner-border-sm { 
+            width: 1rem; 
+            height: 1rem; 
+        }
+        
+        .season-badge {
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            margin: 0 var(--spacing-xs);
+        }
+        
+        .filter-section {
+            background: var(--light-gray);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-right: var(--spacing-sm);
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <i class="bi bi-flower1"></i> CropMate
@@ -53,46 +155,61 @@
         </div>
     </div>
 </nav>
+
 <div class="container">
-    <h1><i class="bi bi-calendar-event"></i> Seasonal Calendar <span class="text-primary">📅</span></h1>
-    <div class="mb-4 text-center">
-        <span class="badge bg-success">Current Season: {{ data.current_season }}</span>
-        <span class="badge bg-primary">Current Month: {{ data.current_month }}</span>
+    <div class="page-header">
+        <h1><i class="bi bi-calendar-event"></i> Seasonal Calendar</h1>
+        <p class="subtitle">View the best sowing, growing, and harvesting times for each crop throughout the year</p>
     </div>
-    <div class="mb-3 d-flex flex-wrap justify-content-center align-items-center gap-2">
-        <strong>Filter by:</strong>
-        <div class="btn-group" role="group">
-            <button class="btn btn-outline-secondary filter-btn all-btn active" onclick="showAllCrops(this)">Show All</button>
-            {% for season in data.all_seasons %}
-                <button class="btn btn-outline-success filter-btn season-btn" onclick="filterBySeason('{{ season }}', this)">{{ season.title() }}</button>
-            {% endfor %}
+    
+    <div class="calendar-container">
+        <div class="text-center mb-4">
+            <span class="season-badge">Current Season: {{ data.current_season }}</span>
+            <span class="season-badge">Current Month: {{ data.current_month }}</span>
         </div>
-        <strong class="ms-4">or by Month:</strong>
-        <div class="btn-group flex-wrap" role="group">
-            {% for month in data.months %}
-                <button class="btn btn-outline-primary filter-btn month-btn {% if data.current_month == month %}active{% endif %}" onclick="filterByMonth({{ loop.index }}, this)">{{ month }}</button>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-bordered calendar-table align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Crop</th>
-                    {% for month in data.months %}
-                        <th class="month-header {% if data.current_month == month %}current-month{% endif %}">{{ month }}</th>
+        
+        <div class="filter-section">
+            <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
+                <span class="filter-label">Filter by Season:</span>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-secondary filter-btn all-btn active" onclick="showAllCrops(this)">Show All</button>
+                    {% for season in data.all_seasons %}
+                        <button class="btn btn-outline-success filter-btn season-btn" onclick="filterBySeason('{{ season }}', this)">{{ season.title() }}</button>
                     {% endfor %}
-                </tr>
-            </thead>
-            <tbody id="calendar-body">
-                <!-- Rows will be populated by JavaScript -->
-            </tbody>
-        </table>
-    </div>
-    <div class="mt-3 text-center legend">
-        <span class="badge sowing">Sowing</span>
-        <span class="badge growing">Growing</span>
-        <span class="badge harvesting">Harvesting</span>
+                </div>
+                
+                <span class="filter-label ms-4">or by Month:</span>
+                <div class="btn-group flex-wrap" role="group">
+                    {% for month in data.months %}
+                        <button class="btn btn-outline-primary filter-btn month-btn {% if data.current_month == month %}active{% endif %}" onclick="filterByMonth({{ loop.index }}, this)">{{ month }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered calendar-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Crop</th>
+                        {% for month in data.months %}
+                            <th class="month-header {% if data.current_month == month %}current-month{% endif %}">{{ month }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="calendar-body">
+                    <!-- Rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-center mt-4">
+            <div class="legend">
+                <span class="badge sowing">Sowing</span>
+                <span class="badge growing">Growing</span>
+                <span class="badge harvesting">Harvesting</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -199,8 +316,8 @@
                     console.error('Error:', error);
                     showError('Failed to load seasonal crops. Please try again.');
                 });
-        }
-        
+        };
+
         window.filterByMonth = function(monthNum, element) {
             updateActiveButton(element);
             showLoading();
@@ -223,14 +340,14 @@
                     console.error('Error:', error);
                     showError('Failed to load monthly crops. Please try again.');
                 });
-        }
+        };
 
         window.showAllCrops = function(element) {
             updateActiveButton(element);
             renderCalendar(ALL_CROPS);
-        }
+        };
 
-        // Initial render on page load - show all crops by default
+        // Initial render
         renderCalendar(ALL_CROPS);
     });
 </script>

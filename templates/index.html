@@ -3,21 +3,72 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CropMate - Home</title>
+    <title>CropMate - Smart Farming Solutions</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        body { background: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .feature-card { border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 2rem; margin-bottom: 2rem; background: #fff; transition: box-shadow 0.2s; }
-        .feature-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
-        .feature-icon { font-size: 2.5rem; color: #3498db; margin-bottom: 1rem; }
-        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .main-title { color: #2c3e50; text-align: center; margin: 2rem 0 1rem 0; }
-        .subtitle { text-align: center; color: #34495e; margin-bottom: 2rem; }
+        .hero-section {
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: var(--spacing-xl) 0;
+            margin-bottom: var(--spacing-xl);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .hero-subtitle {
+            font-size: var(--font-size-xl);
+            opacity: 0.9;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .hero-icon {
+            font-size: 4rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--accent-color);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-xl);
+        }
+        
+        .stats-section {
+            background: var(--gradient-light);
+            padding: var(--spacing-xl) 0;
+            margin: var(--spacing-xl) 0;
+            border-radius: var(--radius-lg);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: var(--spacing-md);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <i class="bi bi-flower1"></i> CropMate
@@ -41,84 +92,178 @@
         </div>
     </div>
 </nav>
+
+<div class="hero-section">
+    <div class="container text-center">
+        <div class="hero-icon">
+            <i class="bi bi-flower1"></i>
+        </div>
+        <h1 class="hero-title">Welcome to CropMate</h1>
+        <p class="hero-subtitle">Your all-in-one digital companion for smarter, more profitable, and sustainable farming</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/recommend" class="btn btn-light btn-lg">
+                <i class="bi bi-lightning-charge"></i> Get Started
+            </a>
+            <a href="/compare" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-bar-chart"></i> Compare Crops
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="container">
-    <h1 class="main-title"><i class="bi bi-flower1"></i> Welcome to CropMate</h1>
-    <p class="subtitle">Your all-in-one digital companion for smarter, more profitable, and sustainable farming.</p>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-search"></i></div>
-                <h4>Crop Recommendation</h4>
-                <p>Get the best crop suggestions for your soil and climate. Maximize your yield and reduce risk.</p>
-                <a href="/recommend" class="btn btn-primary">Get Started</a>
+    <div class="stats-section">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">22+</span>
+                    <div class="stat-label">Crop Types</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">28</span>
+                    <div class="stat-label">Indian States</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">95%</span>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">24/7</span>
+                    <div class="stat-label">Support</div>
+                </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-bar-chart"></i></div>
-                <h4>Compare Crops</h4>
-                <p>Compare two crops side-by-side for yield, price, water needs, and more. Make informed choices.</p>
-                <a href="/compare" class="btn btn-primary">Compare Now</a>
+    </div>
+
+    <div class="feature-grid">
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-search"></i>
             </div>
+            <h4>Smart Crop Recommendation</h4>
+            <p>Get AI-powered crop suggestions based on your soil conditions, climate, and location. Maximize your yield and reduce risk.</p>
+            <a href="/recommend" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> Get Recommendation
+            </a>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-cash-coin"></i></div>
-                <h4>Profitability Calculator</h4>
-                <p>Estimate your profit for any crop by entering your area and costs. Plan your finances smartly.</p>
-                <a href="/profitability" class="btn btn-primary">Calculate</a>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-bar-chart"></i>
             </div>
+            <h4>Compare Crops</h4>
+            <p>Compare two crops side-by-side for yield, price, water needs, and more. Make informed decisions for your farm.</p>
+            <a href="/compare" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> Compare Now
+            </a>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-calendar-event"></i></div>
-                <h4>Seasonal Calendar</h4>
-                <p>See the best sowing, growing, and harvesting times for each crop in your region.</p>
-                <a href="/calendar" class="btn btn-primary">View Calendar</a>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-cash-coin"></i>
             </div>
+            <h4>Profitability Calculator</h4>
+            <p>Estimate your profit for any crop by entering your area and costs. Plan your finances smartly and optimize returns.</p>
+            <a href="/profitability" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> Calculate Profit
+            </a>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-lightbulb"></i></div>
-                <h4>Best Practices</h4>
-                <p>Learn the best farming practices and how to avoid common problems for each crop.</p>
-                <a href="/practices" class="btn btn-primary">Learn More</a>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-calendar-event"></i>
             </div>
+            <h4>Seasonal Calendar</h4>
+            <p>View the best sowing, growing, and harvesting times for each crop in your region. Never miss the perfect timing.</p>
+            <a href="/calendar" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> View Calendar
+            </a>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-geo-alt"></i></div>
-                <h4>Local Suitability</h4>
-                <p>Find out which crops are best for your state or district, based on local conditions.</p>
-                <a href="/suitability" class="btn btn-primary">Check Suitability</a>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-lightbulb"></i>
             </div>
+            <h4>Best Practices</h4>
+            <p>Learn proven farming practices and how to avoid common problems for each crop. Improve your farming skills.</p>
+            <a href="/practices" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> Learn More
+            </a>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-bank"></i></div>
-                <h4>Schemes & Support</h4>
-                <p>Access government schemes, subsidies, and support contacts for your crops.</p>
-                <a href="/schemes" class="btn btn-primary">See Schemes</a>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-geo-alt"></i>
             </div>
+            <h4>Local Suitability</h4>
+            <p>Find out which crops are best for your state or district based on local conditions and climate patterns.</p>
+            <a href="/suitability" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> Check Suitability
+            </a>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-graph-up"></i></div>
-                <h4>Market Trends</h4>
-                <p>View recent market price trends for each crop to help you decide when to sell.</p>
-                <a href="/market" class="btn btn-primary">View Trends</a>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-bank"></i>
             </div>
+            <h4>Schemes & Support</h4>
+            <p>Access government schemes, subsidies, and support contacts for your crops. Get the help you deserve.</p>
+            <a href="/schemes" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> See Schemes
+            </a>
         </div>
-        <div class="col-md-6">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="bi bi-people"></i></div>
-                <h4>Community</h4>
-                <p>Read farmer tips, Q&A, and success stories. Learn from your peers.</p>
-                <a href="/community" class="btn btn-primary">Join Community</a>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-graph-up"></i>
+            </div>
+            <h4>Market Trends</h4>
+            <p>View recent market price trends for each crop to help you decide when to sell for maximum profit.</p>
+            <a href="/market" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> View Trends
+            </a>
+        </div>
+
+        <div class="feature-card fade-in-up">
+            <div class="feature-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <h4>Farmer Community</h4>
+            <p>Connect with fellow farmers, read success stories, and get expert advice. Learn from the community.</p>
+            <a href="/community" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i> Join Community
+            </a>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <div class="card">
+            <div class="card-body">
+                <h3>Ready to Transform Your Farming?</h3>
+                <p class="mb-4">Join thousands of farmers who are already using CropMate to improve their yields and profits.</p>
+                <a href="/recommend" class="btn btn-success btn-lg">
+                    <i class="bi bi-rocket"></i> Start Your Journey
+                </a>
             </div>
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Add animation delay to feature cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.feature-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+</script>
 </body>
 </html>
