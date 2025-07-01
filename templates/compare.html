@@ -21,6 +21,13 @@
             overflow: hidden;
             text-align: center;
             box-shadow: var(--shadow-sm);
+            min-height: 320px;
+            max-width: 260px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            word-break: break-word;
         }
         
         .crop-card:hover {
@@ -54,7 +61,7 @@
         
         .crop-card img {
             width: 100%;
-            height: 200px;
+            height: 160px;
             object-fit: cover;
             border-radius: var(--radius-md);
             margin-bottom: var(--spacing-md);
@@ -71,6 +78,7 @@
             margin: 0;
             color: var(--dark-gray);
             font-weight: 600;
+            word-break: break-word;
         }
         
         .comparison-section {
@@ -228,26 +236,70 @@
     </nav>
 
     <div class="container">
-        <div class="page-header">
+        <div class="page-header section">
             <h1><i class="bi bi-bar-chart"></i> Compare Crops</h1>
             <p class="subtitle">Compare two crops side-by-side to make informed decisions for your farm</p>
         </div>
         
         <!-- Crop Selection -->
-        <div class="comparison-section">
+        <div class="comparison-section section">
             <h3><i class="bi bi-grid"></i> Select Crops to Compare</h3>
-            <div class="crop-grid" id="cropGrid">
-                <!-- Crops will be loaded here -->
+            <div class="crop-grid" id="cropSelector">
+                <!-- Crops will be loaded here by JS -->
+            </div>
+            <!-- Selected Crops Indicator -->
+            <div id="selectedCropsIndicator" style="display:none; margin-bottom: 1.5rem;">
+                <div class="d-flex flex-wrap align-items-center mb-2">
+                    <span class="me-2 fw-bold">Selected:</span>
+                    <span id="selectedCropsList" class="d-flex flex-wrap"></span>
+                    <button class="btn btn-outline-danger btn-sm ms-3" onclick="clearSelection()"><i class="bi bi-x-circle"></i> Clear</button>
+                </div>
             </div>
         </div>
 
         <!-- Comparison Results -->
-        <div id="comparisonResults" style="display: none;">
-            <!-- Results will be displayed here -->
+        <div id="comparisonContent" class="comparison-section section" style="display:none;">
+            <h3><i class="bi bi-bar-chart"></i> Crop Comparison</h3>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h4 id="crop1Header">Crop 1</h4>
+                </div>
+                <div class="col-md-6">
+                    <h4 id="crop2Header">Crop 2</h4>
+                </div>
+            </div>
+            <table class="comparison-table table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th id="crop1HeaderTable">Crop 1</th>
+                        <th id="crop2HeaderTable">Crop 2</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonTableBody">
+                    <!-- Comparison rows will be inserted here -->
+                </tbody>
+            </table>
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="chart-container mb-4">
+                        <canvas id="climateChart"></canvas>
+                    </div>
+                    <div id="soilDetails1">Soil details 1 will appear here.</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container mb-4">
+                        <canvas id="profitabilityChart"></canvas>
+                    </div>
+                    <div id="soilDetails2">Soil details 2 will appear here.</div>
+                </div>
+            </div>
+            <div class="map-container mt-4" id="cropMap"></div>
+            <div id="comparisonFallback" style="display:none; color:var(--danger); margin-top:1rem;">Comparison data could not be loaded. Please try again.</div>
         </div>
 
         <!-- Loading Spinner -->
-        <div class="loading-spinner" id="loadingSpinner">
+        <div class="loading-spinner section" id="loadingSpinner">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
@@ -255,7 +307,7 @@
         </div>
 
         <!-- Select Message -->
-        <div class="select-message" id="selectMessage">
+        <div class="select-message section" id="selectMessage">
             <i class="bi bi-arrow-up-circle"></i>
             <h4>Select Two Crops to Compare</h4>
             <p>Choose any two crops from the grid above to see a detailed comparison of their characteristics, requirements, and profitability.</p>
@@ -490,62 +542,53 @@
         // Function to update comparison
         async function updateComparison() {
             if (selectedCrops.length !== 2) return;
-
-            console.log('Updating comparison for:', selectedCrops);
-
             document.getElementById('loadingSpinner').classList.add('active');
             document.getElementById('comparisonContent').style.display = 'none';
             document.getElementById('selectMessage').style.display = 'none';
-
+            document.getElementById('comparisonFallback').style.display = 'none';
             try {
                 const [crop1Response, crop2Response] = await Promise.all([
                     fetch(`/api/crops/${encodeURIComponent(selectedCrops[0])}`),
                     fetch(`/api/crops/${encodeURIComponent(selectedCrops[1])}`)
                 ]);
-
-                console.log('Crop 1 response status:', crop1Response.status);
-                console.log('Crop 2 response status:', crop2Response.status);
-
-                if (!crop1Response.ok || !crop2Response.ok) {
-                    throw new Error(`Failed to fetch crop data. Status: ${crop1Response.status}, ${crop2Response.status}`);
-                }
-
                 const crop1 = await crop1Response.json();
                 const crop2 = await crop2Response.json();
-
-                console.log('Crop 1 data:', crop1);
-                console.log('Crop 2 data:', crop2);
-
+                console.log('Crop 1 API response:', crop1);
+                console.log('Crop 2 API response:', crop2);
+                if (crop1.error || crop2.error) {
+                    document.getElementById('comparisonFallback').textContent = 'Comparison data could not be loaded: ' + (crop1.error || crop2.error);
+                    document.getElementById('comparisonFallback').style.display = 'block';
+                    document.getElementById('comparisonContent').style.display = 'none';
+                    return;
+                }
                 // Add crop names to the data
                 crop1.name = selectedCrops[0];
                 crop2.name = selectedCrops[1];
-
                 updateBasicInfo(crop1, crop2);
                 updateClimateChart(crop1, crop2);
                 updateSoilDetails(crop1, crop2);
-                updateProfitabilityChart(crop1, crop2);
-                updateMap(crop1, crop2);
-
-                document.getElementById('comparisonContent').style.display = 'block';
-                
-                // It's a common issue with Leaflet that maps in hidden divs don't initialize correctly.
-                // We need to invalidate the size once the container is visible.
-                setTimeout(() => {
-                    if (map) {
-                        map.invalidateSize();
-                        // After invalidating, we need to fit the bounds again.
-                        if (markers && markers.length > 0) {
-                            const group = new L.featureGroup(markers);
-                            map.fitBounds(group.getBounds().pad(0.1));
-                        }
-                    }
-                }, 200); // A small timeout is often needed for the container to be rendered.
-
-                console.log('Comparison updated successfully');
+                // Only show comparison if all required elements exist
+                if (
+                    document.getElementById('comparisonTableBody') &&
+                    document.getElementById('soilDetails1') &&
+                    document.getElementById('soilDetails2') &&
+                    document.getElementById('climateChart') &&
+                    document.getElementById('profitabilityChart') &&
+                    document.getElementById('crop1Header') &&
+                    document.getElementById('crop2Header') &&
+                    document.getElementById('cropMap')
+                ) {
+                    document.getElementById('comparisonContent').style.display = 'block';
+                } else {
+                    document.getElementById('comparisonFallback').textContent = 'Comparison UI elements missing. Please contact support.';
+                    document.getElementById('comparisonFallback').style.display = 'block';
+                }
+                // Map and profitability chart update can be added here with similar checks
             } catch (error) {
                 console.error('Error updating comparison:', error);
-                alert(`Failed to load crop comparison: ${error.message}. Please try again.`);
-                document.getElementById('selectMessage').style.display = 'block';
+                document.getElementById('comparisonFallback').textContent = 'Failed to load crop comparison: ' + error.message;
+                document.getElementById('comparisonFallback').style.display = 'block';
+                document.getElementById('comparisonContent').style.display = 'none';
             } finally {
                 document.getElementById('loadingSpinner').classList.remove('active');
             }
@@ -553,9 +596,16 @@
 
         // Function to update basic information
         function updateBasicInfo(crop1, crop2) {
-            document.getElementById('crop1Header').textContent = crop1.name;
-            document.getElementById('crop2Header').textContent = crop2.name;
-
+            const crop1Header = document.getElementById('crop1Header');
+            const crop2Header = document.getElementById('crop2Header');
+            const tableBody = document.getElementById('comparisonTableBody');
+            if (!crop1Header || !crop2Header || !tableBody) {
+                document.getElementById('comparisonFallback').style.display = 'block';
+                document.getElementById('comparisonContent').style.display = 'none';
+                return;
+            }
+            crop1Header.textContent = crop1.name;
+            crop2Header.textContent = crop2.name;
             const features = [
                 { key: 'description', label: 'Description' },
                 { key: 'growing_season', label: 'Growing Season' },
@@ -564,10 +614,7 @@
                 { key: 'expected_yield', label: 'Expected Yield' },
                 { key: 'market_price', label: 'Market Price' }
             ];
-
-            const tableBody = document.getElementById('comparisonTableBody');
             tableBody.innerHTML = '';
-
             features.forEach(feature => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -581,18 +628,15 @@
 
         // Function to update climate chart
         function updateClimateChart(crop1, crop2) {
-            const ctx = document.getElementById('climateChart').getContext('2d');
-            
+            const ctx = document.getElementById('climateChart');
+            if (!ctx) return;
+            const context = ctx.getContext('2d');
             if (climateChart) {
                 climateChart.destroy();
             }
-
             const climateData1 = crop1.climate_suitability || {};
             const climateData2 = crop2.climate_suitability || {};
-
-            const defaultData = [0, 0, 0, 0, 0];
-
-            climateChart = new Chart(ctx, {
+            climateChart = new Chart(context, {
                 type: 'radar',
                 data: {
                     labels: ['Temperature', 'Humidity', 'Rainfall', 'Sunlight', 'Wind'],
@@ -647,10 +691,9 @@
         function updateSoilDetails(crop1, crop2) {
             const soilDetails1 = document.getElementById('soilDetails1');
             const soilDetails2 = document.getElementById('soilDetails2');
-
+            if (!soilDetails1 || !soilDetails2) return;
             const soil1 = crop1.soil_compatibility || {};
             const soil2 = crop2.soil_compatibility || {};
-
             soilDetails1.innerHTML = `
                 <h5 class="mb-3">${crop1.name}</h5>
                 <p class="mb-3"><strong>Preferred Soil Type:</strong> ${crop1.soil_type || 'N/A'}</p>
@@ -660,7 +703,6 @@
                     <span class="feature-badge high">Fertility: ${soil1.fertility || 'N/A'}</span>
                 </div>
             `;
-
             soilDetails2.innerHTML = `
                 <h5 class="mb-3">${crop2.name}</h5>
                 <p class="mb-3"><strong>Preferred Soil Type:</strong> ${crop2.soil_type || 'N/A'}</p>
