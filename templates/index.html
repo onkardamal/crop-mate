@@ -68,16 +68,16 @@
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark">
+<nav class="navbar navbar-expand-lg navbar-dark" aria-label="Main navigation">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <i class="bi bi-flower1"></i> CropMate
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
+            <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="/recommend">Crop Recommendation</a></li>
                 <li class="nav-item"><a class="nav-link" href="/compare">Compare Crops</a></li>
@@ -93,18 +93,18 @@
     </div>
 </nav>
 
-<div class="hero-section">
+<div class="hero-section section-accent" aria-label="Welcome section">
     <div class="container text-center">
         <div class="hero-icon">
             <i class="bi bi-flower1"></i>
         </div>
         <h1 class="hero-title">Welcome to CropMate</h1>
         <p class="hero-subtitle">Your all-in-one digital companion for smarter, more profitable, and sustainable farming</p>
-        <div class="d-flex justify-content-center gap-3">
-            <a href="/recommend" class="btn btn-light btn-lg">
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="/recommend" class="btn btn-light btn-lg" aria-label="Get Started with Crop Recommendation">
                 <i class="bi bi-lightning-charge"></i> Get Started
             </a>
-            <a href="/compare" class="btn btn-outline-light btn-lg">
+            <a href="/compare" class="btn btn-outline-light btn-lg" aria-label="Compare Crops">
                 <i class="bi bi-bar-chart"></i> Compare Crops
             </a>
         </div>
@@ -112,27 +112,27 @@
 </div>
 
 <div class="container">
-    <div class="stats-section">
-        <div class="row">
-            <div class="col-md-3">
+    <div class="stats-section section" aria-label="Platform statistics">
+        <div class="row justify-content-center align-items-stretch">
+            <div class="col-md-3 col-6 mb-4 mb-md-0">
                 <div class="stat-item">
                     <span class="stat-number">22+</span>
                     <div class="stat-label">Crop Types</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 col-6 mb-4 mb-md-0">
                 <div class="stat-item">
                     <span class="stat-number">28</span>
                     <div class="stat-label">Indian States</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 col-6 mb-4 mb-md-0">
                 <div class="stat-item">
                     <span class="stat-number">95%</span>
                     <div class="stat-label">Accuracy</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 col-6">
                 <div class="stat-item">
                     <span class="stat-number">24/7</span>
                     <div class="stat-label">Support</div>
@@ -141,14 +141,14 @@
         </div>
     </div>
 
-    <div class="feature-grid">
+    <div class="feature-grid section" aria-label="Key features">
         <div class="feature-card fade-in-up">
             <div class="feature-icon">
                 <i class="bi bi-search"></i>
             </div>
             <h4>Smart Crop Recommendation</h4>
             <p>Get AI-powered crop suggestions based on your soil conditions, climate, and location. Maximize your yield and reduce risk.</p>
-            <a href="/recommend" class="btn btn-primary">
+            <a href="/recommend" class="btn btn-primary" aria-label="Get Recommendation">
                 <i class="bi bi-arrow-right"></i> Get Recommendation
             </a>
         </div>
@@ -159,7 +159,7 @@
             </div>
             <h4>Compare Crops</h4>
             <p>Compare two crops side-by-side for yield, price, water needs, and more. Make informed decisions for your farm.</p>
-            <a href="/compare" class="btn btn-primary">
+            <a href="/compare" class="btn btn-primary" aria-label="Compare Now">
                 <i class="bi bi-arrow-right"></i> Compare Now
             </a>
         </div>
@@ -170,7 +170,7 @@
             </div>
             <h4>Profitability Calculator</h4>
             <p>Estimate your profit for any crop by entering your area and costs. Plan your finances smartly and optimize returns.</p>
-            <a href="/profitability" class="btn btn-primary">
+            <a href="/profitability" class="btn btn-primary" aria-label="Calculate Profit">
                 <i class="bi bi-arrow-right"></i> Calculate Profit
             </a>
         </div>
@@ -181,7 +181,7 @@
             </div>
             <h4>Seasonal Calendar</h4>
             <p>View the best sowing, growing, and harvesting times for each crop in your region. Never miss the perfect timing.</p>
-            <a href="/calendar" class="btn btn-primary">
+            <a href="/calendar" class="btn btn-primary" aria-label="View Calendar">
                 <i class="bi bi-arrow-right"></i> View Calendar
             </a>
         </div>
@@ -192,7 +192,7 @@
             </div>
             <h4>Best Practices</h4>
             <p>Learn proven farming practices and how to avoid common problems for each crop. Improve your farming skills.</p>
-            <a href="/practices" class="btn btn-primary">
+            <a href="/practices" class="btn btn-primary" aria-label="Learn More">
                 <i class="bi bi-arrow-right"></i> Learn More
             </a>
         </div>
