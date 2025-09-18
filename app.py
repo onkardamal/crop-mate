@@ -2239,5 +2239,17 @@ def api_community_stats():
     }
     return jsonify({"stats": stats})
 
+@app.route('/api/test-images')
+def test_images():
+    """Test endpoint to verify image paths"""
+    import os
+    image_dir = 'static/images'
+    images = []
+    if os.path.exists(image_dir):
+        for filename in os.listdir(image_dir):
+            if filename.endswith('.png'):
+                images.append(filename)
+    return jsonify({"images": images, "count": len(images)})
+
 if __name__ == "__main__":
     app.run(debug=True)
