@@ -1,6 +1,6 @@
 # CropMate 🌱
 
-**Your all-in-one digital companion for smarter, more profitable, and sustainable farming.**
+**Your intelligent agricultural companion for data-driven farming decisions in 2025.**
 
 CropMate is a comprehensive web application that uses machine learning to help farmers make informed decisions about crop selection, comparison, and farming practices. Built with Flask and featuring a modern, responsive UI with advanced agricultural intelligence.
 
