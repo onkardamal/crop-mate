@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}CropMate - Profitability Calculator{% endblock %}
+{% block extra_head %}
+    <style>
+        .calculator-form {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .result-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .result-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-lg);
+            text-align: center;
+            transition: var(--transition-normal);
+        }
+        
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .result-card.revenue {
+            border-left: 4px solid var(--success);
+        }
+        
+        .result-card.costs {
+            border-left: 4px solid var(--danger);
+        }
+        
+        .result-card.profit {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .result-label {
+            color: var(--gray);
+            font-weight: 500;
+        }
+        
+        .revenue .result-value { color: var(--success); }
+        .costs .result-value { color: var(--danger); }
+        .profit .result-value { color: var(--primary-color); }
+        
+        .detailed-breakdown {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-xl);
+        }
+        
+        .crop-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .breakdown-table {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .breakdown-table th {
+            background: var(--gradient-light);
+            color: var(--dark-gray);
+            font-weight: 600;
+            padding: var(--spacing-md);
+        }
+        
+        .breakdown-table td {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .breakdown-table tr:hover {
+            background: rgba(46, 139, 87, 0.05);
+        }
+        
+        .table-success {
+            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%) !important;
+        }
+        
+        .table-danger {
+            background: linear-gradient(135deg, #F8D7DA 0%, #F5C6CB 100%) !important;
+        }
+        
+        .table-primary {
+            background: linear-gradient(135deg, #D1ECF1 0%, #BEE5EB 100%) !important;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark" aria-label="Main navigation">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-flower1"></i> CropMate
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/recommend">Crop Recommendation</a></li>
+                <li class="nav-item"><a class="nav-link" href="/compare">Compare Crops</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/profitability">Profitability Calculator</a></li>
+                <li class="nav-item"><a class="nav-link" href="/calendar">Seasonal Calendar</a></li>
+                <li class="nav-item"><a class="nav-link" href="/practices">Best Practices</a></li>
+                <li class="nav-item"><a class="nav-link" href="/suitability">Local Suitability</a></li>
+                <li class="nav-item"><a class="nav-link" href="/schemes">Schemes & Support</a></li>
+                <li class="nav-item"><a class="nav-link" href="/market">Market Trends</a></li>
+                <li class="nav-item"><a class="nav-link" href="/community">Community</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1><i class="bi bi-cash-coin"></i> Profitability Calculator</h1>
+        <p class="subtitle">Calculate potential profits for any crop based on area, costs, and market prices</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="calculator-form">
+        <h3 class="mb-4"><i class="bi bi-calculator"></i> Enter Your Details</h3>
+        <form action="{{ url_for('profitability') }}" method="POST">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="crop_name" class="form-label">Select Crop</label>
+                    <select class="form-select" id="crop_name" name="crop_name" required>
+                        <option value="" disabled selected>-- Choose a crop --</option>
+                        {% for crop in crops %}
+                        <option value="{{ crop }}" {% if results and results.crop_name == crop %}selected{% endif %}>{{ crop }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="area" class="form-label">Area (in Hectares)</label>
+                    <input type="number" step="0.01" class="form-control" id="area" name="area" placeholder="e.g., 1.5" required value="{{ results.area if results else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="costs" class="form-label">Total Estimated Costs (₹)</label>
+                    <input type="number" step="100" class="form-control" id="costs" name="costs" placeholder="e.g., 15000" required value="{{ results.total_costs if results else '' }}">
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-calculator"></i> Calculate Profit
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if results %}
+    <div id="results-section" class="fade-in-up">
+        <h2 class="text-center mb-4"><i class="bi bi-bar-chart-line"></i> Calculation Results for {{ results.crop_name }}</h2>
+        
+        <!-- Summary Cards -->
+        <div class="result-cards">
+            <div class="result-card revenue">
+                <div class="result-value">₹ {{ "{:,.0f}".format(results.gross_revenue) }}</div>
+                <div class="result-label">Gross Revenue</div>
+                <i class="bi bi-graph-up mt-2" style="font-size: 2rem; color: var(--success);"></i>
+            </div>
+            <div class="result-card costs">
+                <div class="result-value">₹ {{ "{:,.0f}".format(results.total_costs) }}</div>
+                <div class="result-label">Total Costs</div>
+                <i class="bi bi-wallet2 mt-2" style="font-size: 2rem; color: var(--danger);"></i>
+            </div>
+            <div class="result-card profit">
+                <div class="result-value">₹ {{ "{:,.0f}".format(results.net_profit) }}</div>
+                <div class="result-label">Net Profit</div>
+                <i class="bi bi-trophy mt-2" style="font-size: 2rem; color: var(--primary-color);"></i>
+            </div>
+        </div>
+        
+        <!-- Detailed Breakdown -->
+        <div class="detailed-breakdown">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-center">
+                    <img src="{{ url_for('static', filename='images/' + results.image) }}" alt="{{ results.crop_name }}" class="crop-image">
+                    <h4 class="mt-3">{{ results.crop_name }}</h4>
+                </div>
+                <div class="col-md-8">
+                    <h5 class="mb-4"><i class="bi bi-list-check"></i> Detailed Breakdown</h5>
+                    <div class="table-responsive">
+                        <table class="table breakdown-table">
+                            <tbody>
+                                <tr>
+                                    <td><i class="bi bi-rulers"></i> Area of Cultivation</td>
+                                    <td><strong>{{ results.area }} Hectares</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="bi bi-box-seam"></i> Average Yield per Hectare</td>
+                                    <td><strong>{{ "{:,.2f}".format(results.avg_yield) }} tons</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="bi bi-graph-up"></i> Total Estimated Yield</td>
+                                    <td><strong>{{ "{:,.2f}".format(results.total_yield) }} tons</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="bi bi-tag"></i> Average Market Price per Ton</td>
+                                    <td><strong>₹ {{ "{:,.2f}".format(results.avg_price) }}</strong></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><i class="bi bi-check-circle"></i> Gross Revenue</td>
+                                    <td><strong>₹ {{ "{:,.2f}".format(results.gross_revenue) }}</strong></td>
+                                </tr>
+                                <tr class="table-danger">
+                                    <td><i class="bi bi-x-circle"></i> Total Costs</td>
+                                    <td><strong>₹ {{ "{:,.2f}".format(results.total_costs) }}</strong></td>
+                                </tr>
+                                <tr class="table-primary fw-bold">
+                                    <td><i class="bi bi-trophy-fill"></i> Estimated Net Profit</td>
+                                    <td><strong>₹ {{ "{:,.2f}".format(results.net_profit) }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

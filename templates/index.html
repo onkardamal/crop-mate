@@ -3,30 +3,52 @@
 {% block extra_head %}
     <style>
         .hero-section {
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #2E8B57 0%, #3CB371 50%, #4ECDC4 100%);
             color: var(--white);
             padding: var(--spacing-xl) 0;
             margin-bottom: var(--spacing-xl);
             border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+        
+        .hero-section .container {
+            position: relative;
+            z-index: 2;
         }
         
         .hero-title {
             font-size: 3.5rem;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: var(--spacing-md);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            color: var(--white);
         }
         
         .hero-subtitle {
             font-size: var(--font-size-xl);
-            opacity: 0.9;
+            opacity: 0.95;
             margin-bottom: var(--spacing-lg);
+            color: var(--white);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
         .hero-icon {
             font-size: 4rem;
             margin-bottom: var(--spacing-md);
-            color: var(--accent-color);
+            color: var(--white);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
         .feature-grid {
@@ -41,6 +63,7 @@
             padding: var(--spacing-xl) 0;
             margin: var(--spacing-xl) 0;
             border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
         }
         
         .stat-item {
@@ -50,14 +73,73 @@
         
         .stat-number {
             font-size: 2.5rem;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--primary-color);
             display: block;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .stat-label {
-            color: var(--gray);
-            font-weight: 500;
+            color: var(--dark-gray);
+            font-weight: 600;
+            font-size: var(--font-size-base);
+        }
+        
+        /* Auto-location feature styling */
+        .auto-location-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .location-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .location-icon {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .weather-info {
+            background: var(--gradient-light);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+        }
+        
+        .weather-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-xs) 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .weather-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: var(--font-size-lg);
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-md);
+            }
         }
     </style>
 {% endblock %}
@@ -82,6 +164,24 @@
 </div>
 
 <div class="container">
+    <!-- Auto-location feature -->
+    <div class="auto-location-card" id="autoLocationCard" style="display: none;">
+        <div class="location-status">
+            <i class="bi bi-geo-alt-fill location-icon"></i>
+            <div>
+                <h5 class="mb-1">Auto-Detected Location</h5>
+                <p class="mb-0 text-muted" id="locationText">Detecting your location...</p>
+            </div>
+            <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshLocation()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+        <div class="weather-info" id="weatherInfo" style="display: none;">
+            <h6 class="mb-2"><i class="bi bi-cloud-sun"></i> Current Weather</h6>
+            <div id="weatherDetails"></div>
+        </div>
+    </div>
+
     <div class="stats-section section" aria-label="Platform statistics">
         <div class="row justify-content-center align-items-stretch">
             <div class="col-md-3 col-6 mb-4 mb-md-0">
@@ -234,6 +334,76 @@ document.addEventListener('DOMContentLoaded', function() {
     cards.forEach((card, index) => {
         card.style.animationDelay = `${index * 0.1}s`;
     });
+    
+    // Auto-detect location on page load
+    detectLocation();
 });
+
+// Auto-location functionality
+async function detectLocation() {
+    const locationCard = document.getElementById('autoLocationCard');
+    const locationText = document.getElementById('locationText');
+    const weatherInfo = document.getElementById('weatherInfo');
+    const weatherDetails = document.getElementById('weatherDetails');
+    
+    try {
+        locationText.textContent = 'Detecting your location...';
+        locationCard.style.display = 'block';
+        
+        const response = await fetch('/api/auto-detect');
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Update location text
+        const location = data.location;
+        const nearestState = data.nearest_state;
+        const distance = data.distance_km;
+        
+        locationText.innerHTML = `
+            <strong>${location.city}, ${location.region}</strong><br>
+            <small>Nearest Indian State: ${nearestState} (${distance.toFixed(1)} km away)</small>
+        `;
+        
+        // Show weather if available
+        if (data.weather) {
+            const weather = data.weather;
+            const climate = data.climate_zone;
+            
+            weatherDetails.innerHTML = `
+                <div class="weather-item">
+                    <span><i class="bi bi-thermometer"></i> Temperature</span>
+                    <span>${weather.temperature}°C</span>
+                </div>
+                <div class="weather-item">
+                    <span><i class="bi bi-droplet"></i> Humidity</span>
+                    <span>${weather.humidity}%</span>
+                </div>
+                <div class="weather-item">
+                    <span><i class="bi bi-cloud"></i> Condition</span>
+                    <span>${weather.description}</span>
+                </div>
+                <div class="weather-item">
+                    <span><i class="bi bi-wind"></i> Wind Speed</span>
+                    <span>${weather.wind_speed} m/s</span>
+                </div>
+            `;
+            weatherInfo.style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Location detection failed:', error);
+        locationText.innerHTML = `
+            <span class="text-warning"><i class="bi bi-exclamation-triangle"></i> Location detection failed</span><br>
+            <small>You can still use all features manually</small>
+        `;
+    }
+}
+
+function refreshLocation() {
+    detectLocation();
+}
 </script>
 {% endblock %}

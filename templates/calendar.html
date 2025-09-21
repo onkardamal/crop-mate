@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CropMate - Seasonal Calendar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% extends 'base.html' %}
+{% block title %}CropMate - Seasonal Calendar{% endblock %}
+{% block extra_head %}
     <style>
         .calendar-container {
             background: var(--white);
@@ -18,338 +12,517 @@
         
         .calendar-table th, .calendar-table td { 
             text-align: center; 
-            vertical-align: middle; 
-            padding: var(--spacing-sm); 
+            padding: 12px 8px;
+            border: 1px solid #dee2e6;
         }
         
-        .calendar-table th { 
+        .calendar-table th {
             background: var(--gradient-light);
             font-weight: 600;
             color: var(--dark-gray);
         }
         
-        .sowing { 
-            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%) !important; 
-            color: var(--success); 
-            font-weight: 500; 
+        .calendar-table td {
+            vertical-align: middle;
         }
         
-        .growing { 
-            background: linear-gradient(135deg, #FFF3CD 0%, #FFEAA7 100%) !important; 
-            color: var(--warning); 
-            font-weight: 500; 
-        }
-        
-        .harvesting { 
-            background: linear-gradient(135deg, #F8D7DA 0%, #F5C6CB 100%) !important; 
-            color: var(--danger); 
-            font-weight: 500; 
-        }
-        
-        .current-month { 
-            border: 3px solid var(--primary-color) !important; 
-            font-weight: bold; 
-        }
-        
-        .crop-img { 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            margin-right: var(--spacing-xs); 
-            border: 2px solid var(--light-gray); 
-        }
-        
-        .filter-btn.active { 
-            font-weight: bold; 
-            border-width: 2px; 
-            background: var(--primary-color);
-            color: var(--white);
-        }
-        
-        .legend .badge { 
-            margin-right: var(--spacing-sm); 
-            padding: var(--spacing-sm) var(--spacing-md); 
-            font-size: var(--font-size-sm); 
-        }
-        
-        .month-cell { 
-            min-width: 60px; 
-            height: 40px; 
-            position: relative; 
-            border-radius: var(--radius-sm);
-        }
-        
-        .month-cell:hover { 
-            opacity: 0.8; 
-            cursor: pointer; 
-            transform: scale(1.05);
-            transition: var(--transition-fast);
-        }
-        
-        .table-responsive { 
-            border-radius: var(--radius-md); 
-            overflow: hidden; 
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .calendar-table { 
-            margin-bottom: 0; 
-        }
-        
-        .btn-group .btn { 
-            border-radius: var(--radius-sm); 
-            margin: 0 2px; 
-        }
-        
-        .spinner-border-sm { 
-            width: 1rem; 
-            height: 1rem; 
-        }
-        
-        .season-badge {
+        .month-header {
             background: var(--gradient-primary);
             color: var(--white);
-            padding: var(--spacing-sm) var(--spacing-md);
+            text-align: center;
+            padding: var(--spacing-md);
             border-radius: var(--radius-md);
-            font-weight: 500;
-            margin: 0 var(--spacing-xs);
+            margin-bottom: var(--spacing-lg);
+            font-weight: 600;
+            font-size: var(--font-size-xl);
         }
         
-        .filter-section {
-            background: var(--light-gray);
-            border-radius: var(--radius-md);
+        .crop-badge {
+            display: inline-block;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            margin: 2px;
+            font-weight: 500;
+        }
+        
+        .crop-badge.sowing {
+            background: var(--success);
+        }
+        
+        .crop-badge.growing {
+            background: var(--info);
+        }
+        
+        .crop-badge.harvesting {
+            background: var(--warning);
+            color: var(--dark-gray);
+        }
+        
+        .season-selector {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
             padding: var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
         }
         
-        .filter-label {
+        .season-btn {
+            margin: 4px;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--primary-color);
+            background: var(--white);
+            color: var(--primary-color);
+            font-weight: 500;
+            transition: var(--transition-fast);
+        }
+        
+        .season-btn:hover,
+        .season-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+        
+        .crop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .crop-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-md);
+            text-align: center;
+            transition: var(--transition-fast);
+            border: 2px solid transparent;
+        }
+        
+        .crop-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+        
+        .crop-card img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .crop-card h6 {
             font-weight: 600;
             color: var(--dark-gray);
-            margin-right: var(--spacing-sm);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .crop-card .season-info {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        .stats-card {
+            background: var(--gradient-light);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            text-align: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stats-label {
+            color: var(--gray);
+            font-weight: 500;
         }
     </style>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark" aria-label="Main navigation">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <i class="bi bi-flower1"></i> CropMate
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="/recommend">Crop Recommendation</a></li>
-                <li class="nav-item"><a class="nav-link" href="/compare">Compare Crops</a></li>
-                <li class="nav-item"><a class="nav-link" href="/profitability">Profitability Calculator</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/calendar">Seasonal Calendar</a></li>
-                <li class="nav-item"><a class="nav-link" href="/practices">Best Practices</a></li>
-                <li class="nav-item"><a class="nav-link" href="/suitability">Local Suitability</a></li>
-                <li class="nav-item"><a class="nav-link" href="/schemes">Schemes & Support</a></li>
-                <li class="nav-item"><a class="nav-link" href="/market">Market Trends</a></li>
-                <li class="nav-item"><a class="nav-link" href="/community">Community</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+{% endblock %}
 
+{% block content %}
 <div class="container">
     <div class="page-header">
         <h1><i class="bi bi-calendar-event"></i> Seasonal Calendar</h1>
-        <p class="subtitle">View the best sowing, growing, and harvesting times for each crop throughout the year</p>
+        <p class="subtitle">Plan your farming activities with our comprehensive seasonal calendar</p>
     </div>
-    
-    <div class="calendar-container">
-        <div class="text-center mb-4">
-            <span class="season-badge">Current Season: {{ data.current_season }}</span>
-            <span class="season-badge">Current Month: {{ data.current_month }}</span>
+
+    <div class="season-selector">
+        <h5 class="mb-3"><i class="bi bi-funnel"></i> Filter by Season</h5>
+        <div class="d-flex flex-wrap">
+            <button class="season-btn active" data-season="all">All Seasons</button>
+            <button class="season-btn" data-season="kharif">Kharif (Monsoon)</button>
+            <button class="season-btn" data-season="rabi">Rabi (Winter)</button>
+            <button class="season-btn" data-season="zaid">Zaid (Summer)</button>
         </div>
-        
-        <div class="filter-section">
-            <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
-                <span class="filter-label">Filter by Season:</span>
-                <div class="btn-group" role="group">
-                    <button class="btn btn-outline-secondary filter-btn all-btn active" onclick="showAllCrops(this)">Show All</button>
-                    {% for season in data.all_seasons %}
-                        <button class="btn btn-outline-success filter-btn season-btn" onclick="filterBySeason('{{ season }}', this)">{{ season.title() }}</button>
-                    {% endfor %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="calendar-container">
+                <div class="month-header">
+                    <i class="bi bi-calendar3"></i> <span id="currentSeasonDisplay">All Seasons</span> - Crop Calendar
                 </div>
                 
-                <span class="filter-label ms-4">or by Month:</span>
-                <div class="btn-group flex-wrap" role="group">
-                    {% for month in data.months %}
-                        <button class="btn btn-outline-primary filter-btn month-btn {% if data.current_month == month %}active{% endif %}" onclick="filterByMonth({{ loop.index }}, this)">{{ month }}</button>
-                    {% endfor %}
+                <div class="table-responsive">
+                    <table class="table calendar-table" id="calendarTable">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Sowing</th>
+                                <th>Growing</th>
+                                <th>Harvesting</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-season="all kharif">
+                                <td><strong>June</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Rice</span>
+                                    <span class="crop-badge sowing">Maize</span>
+                                    <span class="crop-badge sowing">Cotton</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Sugarcane</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Wheat</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all kharif">
+                                <td><strong>July</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Rice</span>
+                                    <span class="crop-badge sowing">Maize</span>
+                                    <span class="crop-badge sowing">Jute</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Cotton</span>
+                                    <span class="crop-badge growing">Sugarcane</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Wheat</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all kharif">
+                                <td><strong>August</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Rice</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Maize</span>
+                                    <span class="crop-badge growing">Cotton</span>
+                                    <span class="crop-badge growing">Jute</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Wheat</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all kharif">
+                                <td><strong>September</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Rice</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Maize</span>
+                                    <span class="crop-badge growing">Cotton</span>
+                                    <span class="crop-badge growing">Jute</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Rice</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all kharif rabi">
+                                <td><strong>October</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Wheat</span>
+                                    <span class="crop-badge sowing">Barley</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Rice</span>
+                                    <span class="crop-badge growing">Maize</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Rice</span>
+                                    <span class="crop-badge harvesting">Maize</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all rabi">
+                                <td><strong>November</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Wheat</span>
+                                    <span class="crop-badge sowing">Barley</span>
+                                    <span class="crop-badge sowing">Mustard</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Rice</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Rice</span>
+                                    <span class="crop-badge harvesting">Maize</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all rabi">
+                                <td><strong>December</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Wheat</span>
+                                    <span class="crop-badge sowing">Barley</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Wheat</span>
+                                    <span class="crop-badge growing">Barley</span>
+                                    <span class="crop-badge growing">Mustard</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Rice</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all rabi">
+                                <td><strong>January</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Wheat</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Wheat</span>
+                                    <span class="crop-badge growing">Barley</span>
+                                    <span class="crop-badge growing">Mustard</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Rice</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all rabi">
+                                <td><strong>February</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Wheat</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Wheat</span>
+                                    <span class="crop-badge growing">Barley</span>
+                                    <span class="crop-badge growing">Mustard</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Rice</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all rabi zaid">
+                                <td><strong>March</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Rice</span>
+                                    <span class="crop-badge sowing">Maize</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Wheat</span>
+                                    <span class="crop-badge growing">Barley</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Wheat</span>
+                                    <span class="crop-badge harvesting">Barley</span>
+                                    <span class="crop-badge harvesting">Mustard</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all zaid">
+                                <td><strong>April</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Rice</span>
+                                    <span class="crop-badge sowing">Maize</span>
+                                    <span class="crop-badge sowing">Cotton</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Rice</span>
+                                    <span class="crop-badge growing">Maize</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Wheat</span>
+                                    <span class="crop-badge harvesting">Barley</span>
+                                </td>
+                            </tr>
+                            <tr data-season="all zaid">
+                                <td><strong>May</strong></td>
+                                <td>
+                                    <span class="crop-badge sowing">Rice</span>
+                                    <span class="crop-badge sowing">Maize</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge growing">Rice</span>
+                                    <span class="crop-badge growing">Maize</span>
+                                    <span class="crop-badge growing">Cotton</span>
+                                </td>
+                                <td>
+                                    <span class="crop-badge harvesting">Wheat</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
         
-        <div class="table-responsive">
-            <table class="table table-bordered calendar-table align-middle">
-                <thead>
-                    <tr>
-                        <th>Crop</th>
-                        {% for month in data.months %}
-                            <th class="month-header {% if data.current_month == month %}current-month{% endif %}">{{ month }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody id="calendar-body">
-                    <!-- Rows will be populated by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="text-center mt-4">
-            <div class="legend">
-                <span class="badge sowing">Sowing</span>
-                <span class="badge growing">Growing</span>
-                <span class="badge harvesting">Harvesting</span>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <div class="stats-number" id="cropCount">22</div>
+                <div class="stats-label" id="seasonLabel">All Season Crops</div>
+            </div>
+            
+            <div class="calendar-container">
+                <h5 class="mb-3"><i class="bi bi-seed"></i> Season Crops</h5>
+                <div class="crop-grid" id="seasonCrops">
+                    <div class="crop-card">
+                        <img src="{{ url_for('static', filename='images/rice.png') }}" alt="Rice">
+                        <h6>Rice</h6>
+                        <div class="season-info">Kharif Season</div>
+                    </div>
+                    <div class="crop-card">
+                        <img src="{{ url_for('static', filename='images/wheat.png') }}" alt="Wheat">
+                        <h6>Wheat</h6>
+                        <div class="season-info">Rabi Season</div>
+                    </div>
+                    <div class="crop-card">
+                        <img src="{{ url_for('static', filename='images/maize.png') }}" alt="Maize">
+                        <h6>Maize</h6>
+                        <div class="season-info">Kharif/Zaid</div>
+                    </div>
+                    <div class="crop-card">
+                        <img src="{{ url_for('static', filename='images/cotton.png') }}" alt="Cotton">
+                        <h6>Cotton</h6>
+                        <div class="season-info">Kharif Season</div>
+                    </div>
+                    <div class="crop-card">
+                        <img src="{{ url_for('static', filename='images/sugarcane.png') }}" alt="Sugarcane">
+                        <h6>Sugarcane</h6>
+                        <div class="season-info">All Seasons</div>
+                    </div>
+                    <div class="crop-card">
+                        <img src="{{ url_for('static', filename='images/jute.png') }}" alt="Jute">
+                        <h6>Jute</h6>
+                        <div class="season-info">Kharif Season</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Embed data as JSON for JS -->
-<script id="calendar-data" type="application/json">{{ data.calendar_data|tojson|safe }}</script>
-<script id="crop-images" type="application/json">{{ data.crop_images|tojson|safe }}</script>
-<script id="all-crops" type="application/json">{{ data.all_crops|tojson|safe }}</script>
-<script id="all-months" type="application/json">{{ data.months|tojson|safe }}</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const CALENDAR_DATA = JSON.parse(document.getElementById('calendar-data').textContent);
-        const CROP_IMAGES = JSON.parse(document.getElementById('crop-images').textContent);
-        const ALL_CROPS = JSON.parse(document.getElementById('all-crops').textContent);
-        const ALL_MONTHS = JSON.parse(document.getElementById('all-months').textContent);
-        const currentMonth = "{{ data.current_month }}";
-
-        function updateActiveButton(element) {
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            if (element) {
-                element.classList.add('active');
-            }
+document.addEventListener('DOMContentLoaded', function() {
+    const seasonButtons = document.querySelectorAll('.season-btn');
+    const calendarTable = document.getElementById('calendarTable');
+    const currentSeasonDisplay = document.getElementById('currentSeasonDisplay');
+    const cropCount = document.getElementById('cropCount');
+    const seasonLabel = document.getElementById('seasonLabel');
+    const seasonCrops = document.getElementById('seasonCrops');
+    
+    // Season data
+    const seasonData = {
+        'all': {
+            name: 'All Seasons',
+            crops: ['Rice', 'Wheat', 'Maize', 'Cotton', 'Sugarcane', 'Jute', 'Barley', 'Mustard'],
+            count: 8
+        },
+        'kharif': {
+            name: 'Kharif (Monsoon)',
+            crops: ['Rice', 'Maize', 'Cotton', 'Jute', 'Sugarcane'],
+            count: 5
+        },
+        'rabi': {
+            name: 'Rabi (Winter)',
+            crops: ['Wheat', 'Barley', 'Mustard', 'Sugarcane'],
+            count: 4
+        },
+        'zaid': {
+            name: 'Zaid (Summer)',
+            crops: ['Rice', 'Maize', 'Cotton', 'Sugarcane'],
+            count: 4
         }
-
-        function renderCalendar(cropsToShow) {
-            const calendarBody = document.getElementById('calendar-body');
-            calendarBody.innerHTML = ''; // Clear existing rows
-
-            if (!cropsToShow || cropsToShow.length === 0) {
-                calendarBody.innerHTML = '<tr><td colspan="13" class="text-center text-muted">No crops found for the selected filter</td></tr>';
-                return;
-            }
-
-            cropsToShow.forEach(crop => {
-                const cropData = CALENDAR_DATA[crop];
-                if (!cropData) return;
-
-                let rowHtml = '<tr>';
-                const imageUrl = `/static/images/${CROP_IMAGES[crop] || 'crop.png'}`;
-                rowHtml += `<td class="text-start">
-                               <img src="${imageUrl}" class="crop-img" alt="${crop}" onerror="this.src='/static/images/crop.png'">
-                               <span>${crop}</span>
-                            </td>`;
-                
-                ALL_MONTHS.forEach(month => {
-                    let cellClass = '';
-                    let cellContent = '';
-                    
-                    if (cropData.sowing.includes(month)) cellClass += ' sowing';
-                    if (cropData.growing.includes(month)) cellClass += ' growing';
-                    if (cropData.harvesting.includes(month)) cellClass += ' harvesting';
-
-                    let monthClass = 'month-cell';
-                    if (month === currentMonth) monthClass += ' current-month';
-
-                    // Add activity indicators
-                    const activities = [];
-                    if (cropData.sowing.includes(month)) activities.push('S');
-                    if (cropData.growing.includes(month)) activities.push('G');
-                    if (cropData.harvesting.includes(month)) activities.push('H');
-                    
-                    if (activities.length > 0) {
-                        cellContent = activities.join('');
-                    }
-
-                    rowHtml += `<td class="${monthClass} ${cellClass}" title="${activities.join(', ')}">${cellContent}</td>`;
-                });
-
-                rowHtml += '</tr>';
-                calendarBody.innerHTML += rowHtml;
-            });
-        }
-
-        function showLoading() {
-            const calendarBody = document.getElementById('calendar-body');
-            calendarBody.innerHTML = '<tr><td colspan="13" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</td></tr>';
-        }
-
-        function showError(message) {
-            const calendarBody = document.getElementById('calendar-body');
-            calendarBody.innerHTML = `<tr><td colspan="13" class="text-center text-danger">${message}</td></tr>`;
-        }
-
-        window.filterBySeason = function(season, element) {
-            updateActiveButton(element);
-            showLoading();
+    };
+    
+    seasonButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            seasonButtons.forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
             
-            fetch(`/api/calendar/season/${season}`)
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.error) {
-                        showError(data.error);
-                    } else {
-                        renderCalendar(data.crops);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('Failed to load seasonal crops. Please try again.');
-                });
-        };
-
-        window.filterByMonth = function(monthNum, element) {
-            updateActiveButton(element);
-            showLoading();
-            
-            fetch(`/api/calendar/month/${monthNum}`)
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.error) {
-                        showError(data.error);
-                    } else {
-                        renderCalendar(data.crops);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('Failed to load monthly crops. Please try again.');
-                });
-        };
-
-        window.showAllCrops = function(element) {
-            updateActiveButton(element);
-            renderCalendar(ALL_CROPS);
-        };
-
-        // Initial render
-        renderCalendar(ALL_CROPS);
+            const season = this.dataset.season;
+            filterBySeason(season);
+        });
     });
+    
+    function filterBySeason(season) {
+        const seasonInfo = seasonData[season];
+        
+        // Update header
+        currentSeasonDisplay.textContent = seasonInfo.name;
+        
+        // Update stats
+        cropCount.textContent = seasonInfo.count;
+        seasonLabel.textContent = seasonInfo.name + ' Crops';
+        
+        // Filter table rows
+        const tableRows = calendarTable.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            const rowSeasons = row.dataset.season.split(' ');
+            if (season === 'all' || rowSeasons.includes(season)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update season crops display
+        updateSeasonCrops(seasonInfo.crops);
+    }
+    
+    function updateSeasonCrops(crops) {
+        const cropImages = {
+            'Rice': 'rice.png',
+            'Wheat': 'wheat.png',
+            'Maize': 'maize.png',
+            'Cotton': 'cotton.png',
+            'Sugarcane': 'sugarcane.png',
+            'Jute': 'jute.png',
+            'Barley': 'barley.png',
+            'Mustard': 'mustard.png'
+        };
+        
+        seasonCrops.innerHTML = '';
+        
+        crops.forEach(crop => {
+            const cropCard = document.createElement('div');
+            cropCard.className = 'crop-card';
+            cropCard.innerHTML = `
+                <img src="{{ url_for('static', filename='images/') }}${cropImages[crop] || 'crop.png'}" alt="${crop}" onerror="this.src='{{ url_for('static', filename='images/crop.png') }}'">
+                <h6>${crop}</h6>
+                <div class="season-info">${getSeasonForCrop(crop)}</div>
+            `;
+            seasonCrops.appendChild(cropCard);
+        });
+    }
+    
+    function getSeasonForCrop(crop) {
+        const cropSeasons = {
+            'Rice': 'Kharif/Zaid',
+            'Wheat': 'Rabi',
+            'Maize': 'Kharif/Zaid',
+            'Cotton': 'Kharif',
+            'Sugarcane': 'All Seasons',
+            'Jute': 'Kharif',
+            'Barley': 'Rabi',
+            'Mustard': 'Rabi'
+        };
+        return cropSeasons[crop] || 'All Seasons';
+    }
+});
 </script>
-</body>
-</html> 
+{% endblock %}

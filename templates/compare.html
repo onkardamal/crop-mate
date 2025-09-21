@@ -15,13 +15,19 @@
             overflow: hidden;
             text-align: center;
             box-shadow: var(--shadow-sm);
-            min-height: 320px;
-            max-width: 260px;
+            min-height: 280px;
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             word-break: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .crop-card {
+                min-height: 320px;
+            }
         }
         
         .crop-card:hover {
@@ -55,12 +61,24 @@
         
         .crop-card img {
             width: 100%;
-            height: 160px;
+            height: 120px;
             object-fit: cover;
             border-radius: var(--radius-md);
             margin-bottom: var(--spacing-md);
             border: 2px solid transparent;
             transition: var(--transition-fast);
+        }
+        
+        @media (min-width: 768px) {
+            .crop-card img {
+                height: 140px;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .crop-card img {
+                height: 150px;
+            }
         }
         
         .crop-card.selected img {
@@ -196,9 +214,25 @@
         
         .crop-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: var(--spacing-lg);
             margin-bottom: var(--spacing-xl);
+        }
+        
+        @media (min-width: 768px) {
+            .crop-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .crop-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+        
+        .crop-card-wrapper {
+            width: 100%;
         }
     </style>
 {% endblock %}
@@ -288,6 +322,8 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Static images base path resolved by Flask
+        const STATIC_IMAGES_BASE = "{{ url_for('static', filename='images') }}";
         // Initialize map
         let map;
         let climateChart;
@@ -410,16 +446,16 @@
 
             allCrops.forEach(crop => {
                 const imageFilename = getCropImageFilename(crop);
-                const imagePath = `/static/images/${imageFilename}`;
+                const imagePath = `${STATIC_IMAGES_BASE}/${imageFilename}`;
                 console.log(`Loading image for ${crop}: ${imagePath}`);
                 
                 const card = document.createElement('div');
-                card.className = 'col-md-4 col-lg-3 mb-3';
+                card.className = 'crop-card-wrapper';
                 card.innerHTML = `
                     <div class="crop-card" data-crop="${crop}">
                         <img src="${imagePath}" 
                              alt="${crop}" 
-                             onerror="console.log('Image failed to load:', this.src); this.src='/static/images/crop.png'"
+                             onerror="console.log('Image failed to load:', this.src); this.src='${STATIC_IMAGES_BASE}/crop.png'"
                              onload="console.log('Image loaded successfully:', this.src)">
                         <h6>${crop}</h6>
                     </div>
@@ -446,10 +482,10 @@
                     const badge = document.createElement('span');
                     badge.className = 'badge bg-primary me-2';
                     badge.innerHTML = `
-                        <img src="/static/images/${getCropImageFilename(crop)}" 
+                        <img src="${STATIC_IMAGES_BASE}/${getCropImageFilename(crop)}" 
                              alt="${crop}" 
                              style="width: 16px; height: 16px; margin-right: 4px;"
-                             onerror="this.src='/static/images/crop.png'">
+                             onerror="this.src='${STATIC_IMAGES_BASE}/crop.png'">
                         ${crop}
                         <button type="button" class="btn-close btn-close-white ms-1" 
                                 onclick="removeCrop('${crop}')" 

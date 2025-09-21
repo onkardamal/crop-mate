@@ -9,19 +9,80 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .navbar-nav .nav-link.active, .navbar-nav .nav-link:focus {
-            background: var(--primary-light);
+            background: rgba(255, 255, 255, 0.2) !important;
             color: var(--white) !important;
             border-radius: var(--radius-md);
-            font-weight: 700;
+            font-weight: 600;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .navbar-nav .nav-link:hover {
-            background: var(--primary-color);
+            background: rgba(255, 255, 255, 0.15) !important;
             color: var(--white) !important;
             border-radius: var(--radius-md);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .navbar-brand img {
             height: 32px;
             margin-right: 8px;
+        }
+        .navbar-nav {
+            align-items: center !important;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .navbar-nav .nav-link {
+            margin: 0 2px !important;
+            padding: 6px 10px !important;
+            font-size: 0.9rem !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500 !important;
+            border-radius: var(--radius-sm) !important;
+            transition: var(--transition-fast) !important;
+            position: relative !important;
+        }
+        .navbar-nav .nav-item {
+            flex-shrink: 0 !important;
+        }
+        .navbar-nav .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--accent-color);
+            transition: var(--transition-fast);
+            transform: translateX(-50%);
+        }
+        .navbar-nav .nav-link:hover::after,
+        .navbar-nav .nav-link.active::after {
+            width: 80%;
+        }
+        @media (max-width: 1200px) {
+            .navbar-nav .nav-link {
+                font-size: 0.85rem !important;
+                padding: 5px 8px !important;
+                margin: 0 1px !important;
+            }
+        }
+        @media (max-width: 991px) {
+            .navbar-nav {
+                margin-top: 1rem !important;
+                text-align: center !important;
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+            .navbar-nav .nav-link {
+                margin: 2px 0 !important;
+                padding: 10px 15px !important;
+                font-size: 0.95rem !important;
+                width: 100% !important;
+                text-align: center !important;
+            }
         }
         .footer {
             background: var(--gradient-primary);
@@ -42,6 +103,33 @@
         main {
             flex: 1 0 auto;
         }
+        
+        /* Force navbar styles to override any conflicting styles */
+        .navbar .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500 !important;
+            padding: 6px 10px !important;
+            margin: 0 2px !important;
+            font-size: 0.9rem !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            border-radius: var(--radius-sm) !important;
+            transition: var(--transition-fast) !important;
+            position: relative !important;
+        }
+        
+        .navbar .navbar-nav .nav-link:hover,
+        .navbar .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: var(--white) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+        }
+        
+        .navbar .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.2) !important;
+            font-weight: 600 !important;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -57,16 +145,16 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Home</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/recommend' in request.path %}active{% endif %}" href="/recommend">Crop Recommendation</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/compare' in request.path %}active{% endif %}" href="/compare">Compare Crops</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/profitability' in request.path %}active{% endif %}" href="/profitability">Profitability Calculator</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/calendar' in request.path %}active{% endif %}" href="/calendar">Seasonal Calendar</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/practices' in request.path %}active{% endif %}" href="/practices">Best Practices</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/suitability' in request.path %}active{% endif %}" href="/suitability">Local Suitability</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/schemes' in request.path %}active{% endif %}" href="/schemes">Schemes & Support</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/market' in request.path %}active{% endif %}" href="/market">Market Trends</a></li>
-                <li class="nav-item"><a class="nav-link {% if '/community' in request.path %}active{% endif %}" href="/community">Community</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/" title="Home">Home</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/recommend' in request.path %}active{% endif %}" href="/recommend" title="Crop Recommendation">Recommend</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/compare' in request.path %}active{% endif %}" href="/compare" title="Compare Crops">Compare</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/profitability' in request.path %}active{% endif %}" href="/profitability" title="Profitability Calculator">Profit</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/calendar' in request.path %}active{% endif %}" href="/calendar" title="Seasonal Calendar">Calendar</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/practices' in request.path %}active{% endif %}" href="/practices" title="Best Practices">Practices</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/suitability' in request.path %}active{% endif %}" href="/suitability" title="Local Suitability">Suitability</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/schemes' in request.path %}active{% endif %}" href="/schemes" title="Schemes & Support">Schemes</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/market' in request.path %}active{% endif %}" href="/market" title="Market Trends">Market</a></li>
+                <li class="nav-item"><a class="nav-link {% if '/community' in request.path %}active{% endif %}" href="/community" title="Community">Community</a></li>
             </ul>
         </div>
     </div>
@@ -75,7 +163,7 @@
     {% block content %}{% endblock %}
 </main>
 <footer class="footer mt-auto">
-    <div>© {{ 2024 }} CropMate. All rights reserved.</div>
+    <div>© 2024 CropMate</div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 {% block extra_scripts %}{% endblock %}
