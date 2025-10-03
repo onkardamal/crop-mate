@@ -3,570 +3,484 @@
 {% block extra_head %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .market-card {
-            border: none;
+        .market-section {
+            background: var(--white);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition-normal);
-            margin-bottom: var(--spacing-lg);
-            overflow: hidden;
-        }
-        
-        .market-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .market-header {
-            background: var(--gradient-primary);
-            color: var(--white);
+            box-shadow: var(--shadow-md);
             padding: var(--spacing-lg);
-            text-align: center;
+            margin-bottom: var(--spacing-lg);
         }
         
-        .market-icon {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-            color: var(--accent-color);
+        .price-card {
+            background: var(--gradient-light);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .price-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .crop-name {
+            font-weight: 600;
+            color: var(--dark-gray);
+            font-size: var(--font-size-lg);
+        }
+        
+        .price-value {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: var(--font-size-xl);
         }
         
         .trend-indicator {
             display: inline-block;
-            padding: var(--spacing-xs) var(--spacing-sm);
+            padding: 2px 8px;
             border-radius: var(--radius-sm);
-            font-weight: 600;
             font-size: var(--font-size-sm);
+            font-weight: 600;
         }
         
         .trend-up {
-            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%);
+            background: #D4EDDA;
             color: var(--success);
         }
         
         .trend-down {
-            background: linear-gradient(135deg, #F8D7DA 0%, #F5C6CB 100%);
+            background: #F8D7DA;
             color: var(--danger);
         }
         
         .trend-stable {
-            background: linear-gradient(135deg, #FFF3CD 0%, #FFEAA7 100%);
+            background: #FFF3CD;
             color: var(--warning);
         }
         
-        .price-card {
-            background: var(--white);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
-            border-left: 4px solid var(--primary-color);
-            box-shadow: var(--shadow-sm);
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: var(--spacing-md) 0;
         }
         
-        .price-value {
-            font-size: var(--font-size-2xl);
+        .market-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .stat-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--light-gray);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
             font-weight: 700;
             color: var(--primary-color);
+            margin-bottom: var(--spacing-xs);
         }
         
-        .price-change {
+        .stat-label {
+            color: var(--gray);
             font-size: var(--font-size-sm);
-            font-weight: 600;
         }
-        
-        .chart-container {
-            background: var(--white);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-lg);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .insight-card {
-            background: var(--gradient-light);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
-            border-left: 4px solid var(--info);
-        }
-        
-        .insight-icon {
-            font-size: 2rem;
-            color: var(--info);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .comparison-table {
-            background: var(--white);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .comparison-table th {
-            background: var(--gradient-light);
-            color: var(--dark-gray);
-            font-weight: 600;
-            padding: var(--spacing-md);
-        }
-        
-        .comparison-table td {
-            padding: var(--spacing-md);
-            border-bottom: 1px solid var(--light-gray);
-        }
-        
-        .comparison-table tr:hover {
-            background: rgba(46, 139, 87, 0.05);
-        }
-        /* Volatility badges */
-        .volatility-low { background: #e7f9ef; color: #1e7e34; border-radius: 12px; padding: 2px 8px; text-transform: capitalize; }
-        .volatility-medium { background: #fff7e6; color: #b88900; border-radius: 12px; padding: 2px 8px; text-transform: capitalize; }
-        .volatility-high { background: #ffe8e8; color: #c0392b; border-radius: 12px; padding: 2px 8px; text-transform: capitalize; }
-        .volatility-very-high { background: #fde2ff; color: #8e44ad; border-radius: 12px; padding: 2px 8px; text-transform: capitalize; }
-        /* Change percent coloring */
-        .change-up { color: var(--success); font-weight: 700; }
-        .change-down { color: var(--danger); font-weight: 700; }
-        .change-flat { color: var(--warning); font-weight: 700; }
-        /* Sparkline container */
-        .sparkline { height: 60px; }
         
         .filter-section {
             background: var(--gradient-light);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-xl);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
             margin-bottom: var(--spacing-lg);
         }
         
         .filter-btn {
             background: var(--white);
-            border: 2px solid var(--light-gray);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-sm) var(--spacing-md);
-            margin: var(--spacing-xs);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            margin: 2px;
             cursor: pointer;
             transition: var(--transition-fast);
-            font-weight: 500;
+            font-size: var(--font-size-sm);
         }
         
         .filter-btn:hover,
         .filter-btn.active {
-            border-color: var(--primary-color);
             background: var(--primary-color);
             color: var(--white);
-            transform: translateY(-2px);
-        }
-        
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: var(--spacing-xl);
-        }
-        
-        .loading-spinner.active {
-            display: block;
-        }
-        
-        .no-data {
-            text-align: center;
-            padding: var(--spacing-xl);
-            color: var(--gray);
-        }
-        
-        .forecast-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: var(--white);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-xl);
-            margin-bottom: var(--spacing-lg);
-            text-align: center;
-        }
-        
-        .forecast-value {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .forecast-label {
-            font-size: var(--font-size-lg);
-            opacity: 0.9;
         }
     </style>
 {% endblock %}
 
 {% block content %}
-<div class="container main-container">
+<div class="container">
     <div class="page-header">
-        <h1><i class="bi bi-graph-up"></i> Market Trends & Analysis</h1>
-        <p class="subtitle">Track real-time market prices, analyze trends, and get insights to maximize your profits</p>
-    </div>
-
-    <!-- Crop Selector -->
-    <div class="crop-selector">
-        <div class="row align-items-center">
-            <div class="col-md-4">
-                <label for="cropSelect" class="form-label fw-bold">Select Crop:</label>
-                <select id="cropSelect" class="form-select">
-                    <option value="">All Crops</option>
-                    <option value="Rice">Rice</option>
-                    <option value="Wheat">Wheat</option>
-                    <option value="Cotton">Cotton</option>
-                    <option value="Sugarcane">Sugarcane</option>
-                    <option value="Maize">Maize</option>
-                    <option value="Pulses">Pulses</option>
-                    <option value="Oilseeds">Oilseeds</option>
-                    <option value="Vegetables">Vegetables</option>
-                    <option value="Fruits">Fruits</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="periodSelect" class="form-label fw-bold">Time Period:</label>
-                <select id="periodSelect" class="form-select">
-                    <option value="3months">3 Months</option>
-                    <option value="6months" selected>6 Months</option>
-                    <option value="1year">1 Year</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <button id="refreshBtn" class="btn btn-primary w-100 mt-4">
-                    <i class="bi bi-arrow-clockwise"></i> Refresh Data
-                </button>
-            </div>
+        <h1><i class="bi bi-graph-up"></i> Market Trends</h1>
+        <p class="subtitle">Stay updated with current crop prices and market insights</p>
+        <div class="location-info text-muted">
+            <i class="bi bi-geo-alt"></i> 
+            <span>Loading location-based prices...</span>
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loading" class="loading">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-3">Loading market data...</p>
-    </div>
-
-    <!-- Market Overview -->
-    <div id="marketOverview" class="row mb-4">
-        <div class="col-md-3">
-            <div class="metric-card">
-                <h4><i class="bi bi-currency-rupee"></i></h4>
-                <h5 id="avgPrice">₹0</h5>
-                <small>Average Price</small>
+    <!-- Market Statistics -->
+    <div class="market-stats">
+        <div class="stat-card">
+            <div class="stat-number">22</div>
+            <div class="stat-label">Crops Tracked</div>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="metric-card">
-                <h4><i class="bi bi-graph-up-arrow"></i></h4>
-                <h5 id="topPerformer">-</h5>
-                <small>Top Performer</small>
+        <div class="stat-card">
+            <div class="stat-number">₹45K</div>
+            <div class="stat-label">Avg Price/Quintal</div>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="metric-card">
-                <h4><i class="bi bi-shield-check"></i></h4>
-                <h5 id="mostStable">-</h5>
-                <small>Most Stable</small>
+        <div class="stat-card">
+            <div class="stat-number">+12%</div>
+            <div class="stat-label">Price Change (30 days)</div>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="metric-card">
-                <h4><i class="bi bi-lightning"></i></h4>
-                <h5 id="highestPotential">-</h5>
-                <small>Highest Potential</small>
-            </div>
+        <div class="stat-card">
+            <div class="stat-number">15</div>
+            <div class="stat-label">Market Centers</div>
         </div>
     </div>
 
-    <!-- Main Content Tabs -->
-    <ul class="nav nav-tabs" id="marketTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="trends-tab" data-bs-toggle="tab" data-bs-target="#trends" type="button" role="tab">
-                <i class="bi bi-graph-up"></i> Price Trends
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="forecast-tab" data-bs-toggle="tab" data-bs-target="#forecast" type="button" role="tab">
-                <i class="bi bi-calendar3"></i> Price Forecast
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button" role="tab">
-                <i class="bi bi-lightbulb"></i> Market Insights
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab">
-                <i class="bi bi-bar-chart"></i> Crop Comparison
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="seasonal-tab" data-bs-toggle="tab" data-bs-target="#seasonal" type="button" role="tab">
-                <i class="bi bi-calendar-month"></i> Seasonal Analysis
-            </button>
-        </li>
-    </ul>
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h5 class="mb-3"><i class="bi bi-funnel"></i> Filter by Category</h5>
+        <div class="d-flex flex-wrap">
+            <button class="filter-btn active" data-category="all">All Crops</button>
+            <button class="filter-btn" data-category="cereals">Cereals</button>
+            <button class="filter-btn" data-category="pulses">Pulses</button>
+            <button class="filter-btn" data-category="fruits">Fruits</button>
+            <button class="filter-btn" data-category="vegetables">Vegetables</button>
+        </div>
+    </div>
 
-    <div class="tab-content" id="marketTabContent">
-        <!-- Price Trends Tab -->
-        <div class="tab-pane fade show active" id="trends" role="tabpanel">
-            <div class="row">
-                <div class="col-12">
-                    <h4><i class="bi bi-graph-up"></i> Current Market Prices & Trends</h4>
-                    <div id="trendsContent"></div>
+    <!-- Price Trends -->
+    <div class="market-section">
+        <h4 class="mb-4"><i class="bi bi-currency-rupee"></i> Current Market Prices</h4>
+        
+        <div class="price-card" data-category="cereals">
+            <div class="price-header">
+                <span class="crop-name">Rice</span>
+                <span class="price-value">₹2,850/quintal</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-up">+5.2%</span>
+            </div>
+        </div>
+
+        <div class="price-card" data-category="cereals">
+            <div class="price-header">
+                <span class="crop-name">Wheat</span>
+                <span class="price-value">₹2,150/quintal</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-down">-2.1%</span>
+            </div>
+        </div>
+
+        <div class="price-card" data-category="cereals">
+            <div class="price-header">
+                <span class="crop-name">Maize</span>
+                <span class="price-value">₹1,850/quintal</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-up">+3.4%</span>
+            </div>
+        </div>
+
+        <div class="price-card" data-category="pulses">
+            <div class="price-header">
+                <span class="crop-name">Lentil</span>
+                <span class="price-value">₹6,200/quintal</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-stable">0.0%</span>
+        </div>
+    </div>
+
+        <div class="price-card" data-category="pulses">
+            <div class="price-header">
+                <span class="crop-name">Chickpea</span>
+                <span class="price-value">₹5,800/quintal</span>
                 </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-up">+1.8%</span>
             </div>
         </div>
 
-        <!-- Price Forecast Tab -->
-        <div class="tab-pane fade" id="forecast" role="tabpanel">
-            <div class="row">
-                <div class="col-12">
-                    <h4><i class="bi bi-calendar3"></i> Price Forecast (Next 3 Months)</h4>
-                    <div class="chart-container">
-                        <canvas id="forecastChart"></canvas>
+        <div class="price-card" data-category="fruits">
+            <div class="price-header">
+                <span class="crop-name">Mango</span>
+                <span class="price-value">₹45/kg</span>
+                    </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-up">+8.5%</span>
+            </div>
+        </div>
+
+        <div class="price-card" data-category="fruits">
+            <div class="price-header">
+                <span class="crop-name">Banana</span>
+                <span class="price-value">₹35/kg</span>
+                </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-down">-1.2%</span>
+            </div>
+        </div>
+
+        <div class="price-card" data-category="vegetables">
+            <div class="price-header">
+                <span class="crop-name">Tomato</span>
+                <span class="price-value">₹65/kg</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Last updated: Today</small>
+                <span class="trend-indicator trend-up">+12.3%</span>
                     </div>
                 </div>
+    </div>
+
+    <!-- Price Chart -->
+    <div class="market-section">
+        <h4 class="mb-4"><i class="bi bi-graph-up"></i> Price Trends (Last 30 Days)</h4>
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
             </div>
         </div>
 
-        <!-- Market Insights Tab -->
-        <div class="tab-pane fade" id="insights" role="tabpanel">
+    <!-- Market Insights -->
+    <div class="market-section">
+        <h4 class="mb-4"><i class="bi bi-lightbulb"></i> Market Insights</h4>
             <div class="row">
-                <div class="col-12">
-                    <h4><i class="bi bi-lightbulb"></i> Market Insights & Recommendations</h4>
-                    <div id="insightsContent"></div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-info-circle"></i> Rice Prices Rising</h6>
+                    <p class="mb-0">Rice prices have increased by 5.2% this week due to strong export demand and reduced supply from key producing regions.</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Crop Comparison Tab -->
-        <div class="tab-pane fade" id="comparison" role="tabpanel">
-            <div class="row">
-                <div class="col-12">
-                    <h4><i class="bi bi-bar-chart"></i> Crop Performance Comparison</h4>
-                    <div class="comparison-table">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Crop</th>
-                                    <th>Current Price</th>
-                                    <th>Trend</th>
-                                    <th>Change %</th>
-                                    <th>Volatility</th>
-                                    <th>Performance Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="comparisonTable">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Seasonal Analysis Tab -->
-        <div class="tab-pane fade" id="seasonal" role="tabpanel">
-            <div class="row">
-                <div class="col-12">
-                    <h4><i class="bi bi-calendar-month"></i> Seasonal Price Patterns</h4>
-                    <div id="seasonalContent"></div>
+            <div class="col-md-6">
+                <div class="alert alert-warning">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Wheat Price Decline</h6>
+                    <p class="mb-0">Wheat prices are down 2.1% due to increased production and government procurement policies.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-let currentCrop = '';
-let forecastChart = null;
-
-// Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
-    loadMarketData();
+    console.log('DOM loaded, initializing market page...');
+    let currentLocation = null;
+    let marketData = null;
     
-    // Event listeners
-    document.getElementById('cropSelect').addEventListener('change', function() {
-        currentCrop = this.value;
-        loadMarketData();
-    });
+    // Auto-detect location and load market data
+    setTimeout(() => {
+        console.log('Starting location-based price loading...');
+        loadLocationBasedPrices();
+    }, 100);
     
-    document.getElementById('refreshBtn').addEventListener('click', function() {
-        loadMarketData();
-    });
-    
-    document.getElementById('periodSelect').addEventListener('change', function() {
-        loadMarketData();
-    });
-});
+    // Filter functionality
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const priceCards = document.querySelectorAll('.price-card');
 
-function showLoading() {
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('marketOverview').style.display = 'none';
-    document.getElementById('marketTabContent').style.display = 'none';
-}
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            
+            priceCards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
 
-function hideLoading() {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('marketOverview').style.display = 'flex';
-    document.getElementById('marketTabContent').style.display = 'block';
-}
-
-async function loadMarketData() {
-    showLoading();
-    
-    try {
-        // Load market trends
-        const trendsResponse = await fetch('/api/market/trends');
-        const trendsData = await trendsResponse.json();
-        
-        // Load top performers
-        const performersResponse = await fetch('/api/market/top-performers');
-        const performersData = await performersResponse.json();
-        
-        // Update overview metrics
-        updateOverviewMetrics(trendsData.trends, performersData);
-        
-        // Update trends content
-        updateTrendsContent(trendsData.trends);
-        
-        // Load forecast if crop is selected
-        if (currentCrop) {
-            await loadForecast(currentCrop);
-            await loadInsights(currentCrop);
-            await loadSeasonalAnalysis(currentCrop);
+    window.loadLocationBasedPrices = async function() {
+        try {
+            // Show loading state
+            showLoadingState();
+            
+            // Try to get user's location, but don't fail if it doesn't work
+            let location = null;
+            try {
+                location = await getUserLocation();
+                currentLocation = location;
+            } catch (error) {
+                console.log('Location detection failed, using default location');
+                location = {
+                    lat: 28.6139,
+                    lon: 77.2090,
+                    city: 'New Delhi',
+                    state: 'Delhi'
+                };
+            }
+            
+            // Fetch market prices for the location
+            console.log(`Fetching prices for: ${location.city}, ${location.state}`);
+            const apiUrl = `/api/market/prices?lat=${location.lat}&lon=${location.lon}&city=${location.city}&state=${location.state}`;
+            console.log('API URL:', apiUrl);
+            
+            const response = await fetch(apiUrl);
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Received market data:', data);
+            
+            if (data.prices && data.prices.length > 0) {
+                console.log(`Successfully received ${data.prices.length} market prices`);
+                marketData = data.prices;
+                updateMarketDisplay(data);
+                updatePriceChart(data.prices);
+            } else {
+                console.error('No market data received:', data);
+                showErrorState();
+            }
+            
+        } catch (error) {
+            console.error('Error loading location-based prices:', error);
+            showErrorState();
         }
-        
-        // Update comparison table
-        updateComparisonTable(trendsData.trends);
-        
-    } catch (error) {
-        console.error('Error loading market data:', error);
-        showError('Failed to load market data. Please try again.');
+    };
+    
+    async function getUserLocation() {
+        return new Promise((resolve, reject) => {
+            // Use a timeout to avoid hanging
+            const timeout = setTimeout(() => {
+                reject(new Error('Location detection timeout'));
+            }, 5000);
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        clearTimeout(timeout);
+                        resolve({
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude,
+                            city: 'Detected Location',
+                            state: 'Auto-detected'
+                        });
+                    },
+                    (error) => {
+                        clearTimeout(timeout);
+                        console.log('Geolocation failed:', error);
+                        reject(error);
+                    },
+                    {
+                        timeout: 5000,
+                        enableHighAccuracy: false,
+                        maximumAge: 300000 // 5 minutes
+                    }
+                );
+            } else {
+                clearTimeout(timeout);
+                reject(new Error('Geolocation not supported'));
+            }
+        });
     }
     
-    hideLoading();
-}
-
-function updateOverviewMetrics(trends, performersData) {
-    const crops = Object.values(trends);
-    const avgPrice = crops.reduce((sum, crop) => sum + crop.current_price, 0) / crops.length;
-    
-    document.getElementById('avgPrice').textContent = `₹${Math.round(avgPrice)}`;
-    document.getElementById('topPerformer').textContent = performersData.best_crop || '-';
-    document.getElementById('mostStable').textContent = performersData.most_stable || '-';
-    document.getElementById('highestPotential').textContent = performersData.highest_potential || '-';
-}
-
-function updateTrendsContent(trends) {
-    const container = document.getElementById('trendsContent');
-    container.innerHTML = '';
-    
-    Object.entries(trends).forEach(([cropName, data]) => {
-        const trendIcon = data.trend === 'increasing' ? 'bi-arrow-up' : 
-                         data.trend === 'decreasing' ? 'bi-arrow-down' : 'bi-arrow-right';
-        const trendClass = data.trend === 'increasing' ? 'trend-up' : 
-                          data.trend === 'decreasing' ? 'trend-down' : 'trend-stable';
+    function updateMarketDisplay(data) {
+        console.log('Updating market display with data:', data);
         
-        const card = document.createElement('div');
-        card.className = 'col-md-6 col-lg-4 mb-3';
-        const sparkId = `spark-${cropName.replace(/\s+/g,'-')}`;
-        const changeClass = data.trend === 'increasing' ? 'change-up' : data.trend === 'decreasing' ? 'change-down' : 'change-flat';
-        card.innerHTML = `
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="card-title">${cropName}</h5>
-                        <span class="${getVolatilityClass(data.volatility)}">${String(data.volatility).replace('_',' ')}</span>
-                    </div>
-                    <div class="price-card mb-2">
-                        <h3 class="mb-1">₹${data.current_price}</h3>
-                        <small>${data.unit}</small>
-                    </div>
-                    <div class="sparkline mb-2">
-                        <canvas id="${sparkId}"></canvas>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="${trendClass} ${changeClass}">
-                            <i class="bi ${trendIcon}"></i> ${data.change_percent}%
-                        </span>
-                        <button class="btn btn-sm btn-outline-primary" onclick="selectCrop('${cropName}')">
-                            View Details
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-        renderSparkline(sparkId, (data.price_history || []).map(p => p.price));
-    });
-}
-
-function getVolatilityClass(volatility) {
-    switch(volatility) {
-        case 'low': return 'volatility-low';
-        case 'medium': return 'volatility-medium';
-        case 'high': return 'volatility-high';
-        case 'very_high': return 'volatility-very-high';
-        default: return 'volatility-medium';
-    }
-}
-
-// Render a small sparkline chart
-function renderSparkline(canvasId, values) {
-    const el = document.getElementById(canvasId);
-    if (!el || !values || values.length === 0) return;
-    new Chart(el.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: values.map((_, i) => i + 1),
-            datasets: [{
-                data: values,
-                borderColor: '#2E8B57',
-                backgroundColor: 'rgba(46,139,87,0.1)',
-                borderWidth: 2,
-                tension: 0.3,
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { enabled: false } },
-            scales: { x: { display: false }, y: { display: false } }
+        // Update location info
+        const locationInfo = document.querySelector('.location-info');
+        if (locationInfo) {
+            locationInfo.innerHTML = `
+                <i class="bi bi-geo-alt"></i> 
+                Prices for ${data.location.city}, ${data.location.state}
+            `;
+        }
+        
+        // Update price cards with real data
+        const priceCards = document.querySelectorAll('.price-card');
+        console.log(`Found ${priceCards.length} price cards`);
+        
+        data.prices.forEach((priceData, index) => {
+            console.log(`Updating price card ${index} with data:`, priceData);
+            if (priceCards[index]) {
+                const priceCard = priceCards[index];
+                const priceValue = priceCard.querySelector('.price-value');
+                const trendIndicator = priceCard.querySelector('.trend-indicator');
+                
+                console.log(`Price card ${index} - priceValue:`, priceValue, 'trendIndicator:', trendIndicator);
+                
+                if (priceValue) {
+                    priceValue.textContent = `₹${priceData.price}/${priceData.unit}`;
+                }
+                
+                if (trendIndicator) {
+                    trendIndicator.textContent = `${priceData.change_percent > 0 ? '+' : ''}${priceData.change_percent}%`;
+                    trendIndicator.className = `trend-indicator trend-${priceData.trend}`;
+                }
+            } else {
+                console.log(`No price card found at index ${index}`);
         }
     });
 }
 
-async function loadForecast(cropName) {
-    try {
-        const response = await fetch(`/api/market/forecast/${cropName}`);
-        const data = await response.json();
+    function updatePriceChart(prices) {
+        const ctx = document.getElementById('priceChart').getContext('2d');
         
-        if (forecastChart) {
-            forecastChart.destroy();
-        }
+        // Get top 3 crops for chart
+        const topCrops = prices.slice(0, 3);
         
-        const ctx = document.getElementById('forecastChart').getContext('2d');
-        forecastChart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
-                labels: data.forecast.map(f => `Month ${f.month}`),
-                datasets: [{
-                    label: `${cropName} Price Forecast`,
-                    data: data.forecast.map(f => f.price),
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: topCrops.map((crop, index) => {
+                    const colors = ['#2E8B57', '#FF6B35', '#4ECDC4'];
+                    const basePrice = crop.price;
+                    const variation = 0.05; // 5% variation
+                    
+                    return {
+                        label: `${crop.crop} (₹/${crop.unit})`,
+                        data: [
+                            basePrice * (1 - variation * 3),
+                            basePrice * (1 - variation * 2),
+                            basePrice * (1 - variation),
+                            basePrice
+                        ],
+                        borderColor: colors[index],
+                        backgroundColor: colors[index] + '20',
+                        tension: 0.4
+                    };
+                })
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: {
-                        display: true,
-                        text: `${cropName} - 3 Month Price Forecast`
+                    legend: {
+                        position: 'top',
                     }
                 },
                 scales: {
@@ -580,135 +494,38 @@ async function loadForecast(cropName) {
                 }
             }
         });
-    } catch (error) {
-        console.error('Error loading forecast:', error);
     }
-}
-
-async function loadInsights(cropName) {
-    try {
-        const response = await fetch(`/api/market/insights/${cropName}`);
-        const data = await response.json();
-        
-        const container = document.getElementById('insightsContent');
-        container.innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="insight-card">
-                        <h6><i class="bi bi-info-circle"></i> Current Situation</h6>
-                        <p>${data.insights.current_situation}</p>
-                    </div>
-                    <div class="insight-card">
-                        <h6><i class="bi bi-graph-up"></i> Trend Analysis</h6>
-                        <p>${data.insights.trend_analysis}</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="recommendation-card">
-                        <h6><i class="bi bi-check-circle"></i> Recommendations</h6>
-                        <ul>
-                            ${data.insights.recommendations.map(rec => `<li>${rec}</li>`).join('')}
-                        </ul>
-                    </div>
-                    ${data.insights.risks.length > 0 ? `
-                        <div class="risk-card">
-                            <h6><i class="bi bi-exclamation-triangle"></i> Risks</h6>
-                            <ul>
-                                ${data.insights.risks.map(risk => `<li>${risk}</li>`).join('')}
-                            </ul>
-                        </div>
-                    ` : ''}
-                    ${data.insights.opportunities.length > 0 ? `
-                        <div class="recommendation-card">
-                            <h6><i class="bi bi-star"></i> Opportunities</h6>
-                            <ul>
-                                ${data.insights.opportunities.map(opp => `<li>${opp}</li>`).join('')}
-                            </ul>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error loading insights:', error);
-    }
-}
-
-async function loadSeasonalAnalysis(cropName) {
-    try {
-        const response = await fetch(`/api/market/seasonal-analysis?crop=${cropName}`);
-        const data = await response.json();
-        
-        const container = document.getElementById('seasonalContent');
-        container.innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6><i class="bi bi-calendar3"></i> Seasonal Pattern</h6>
-                            <p>${data.seasonal_analysis.seasonal_pattern}</p>
-                            <h6><i class="bi bi-calendar-check"></i> Current Season</h6>
-                            <p class="text-capitalize">${data.seasonal_analysis.current_season}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6><i class="bi bi-lightbulb"></i> Seasonal Recommendations</h6>
-                            <ul>
-                                ${data.seasonal_analysis.seasonal_recommendations.map(rec => `<li>${rec}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error loading seasonal analysis:', error);
-    }
-}
-
-function updateComparisonTable(trends) {
-    const tbody = document.getElementById('comparisonTable');
-    tbody.innerHTML = '';
     
-    Object.entries(trends).forEach(([cropName, data]) => {
-        const trendIcon = data.trend === 'increasing' ? 'bi-arrow-up' : 
-                         data.trend === 'decreasing' ? 'bi-arrow-down' : 'bi-arrow-right';
-        const trendClass = data.trend === 'increasing' ? 'trend-up' : 
-                          data.trend === 'decreasing' ? 'trend-down' : 'trend-stable';
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><strong>${cropName}</strong></td>
-            <td>₹${data.current_price}</td>
-            <td><span class="${trendClass}"><i class="bi ${trendIcon}"></i> ${data.trend}</span></td>
-            <td class="${trendClass}">${data.change_percent}%</td>
-            <td><span class="badge ${getVolatilityClass(data.volatility)}">${data.volatility}</span></td>
-            <td>${Math.round(data.current_price * (1 + data.change_percent/100))}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function selectCrop(cropName) {
-    document.getElementById('cropSelect').value = cropName;
-    currentCrop = cropName;
-    loadMarketData();
+    window.showLoadingState = function() {
+        console.log('Showing loading state...');
+        const priceCards = document.querySelectorAll('.price-card');
+        console.log(`Found ${priceCards.length} price cards to show loading state`);
+        priceCards.forEach(card => {
+            card.innerHTML = `
+                <div class="text-center p-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading prices for your location...</p>
+            </div>
+            `;
+        });
+    };
     
-    // Switch to forecast tab
-    const forecastTab = new bootstrap.Tab(document.getElementById('forecast-tab'));
-    forecastTab.show();
-}
-
-function showError(message) {
-    const container = document.getElementById('trendsContent');
-    container.innerHTML = `
-        <div class="alert alert-danger" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> ${message}
-        </div>
-    `;
-}
+    window.showErrorState = function() {
+        console.log('Showing error state...');
+        const priceCards = document.querySelectorAll('.price-card');
+        console.log(`Found ${priceCards.length} price cards to show error state`);
+        priceCards.forEach(card => {
+            card.innerHTML = `
+                <div class="text-center p-3">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                    <p class="mt-2">Unable to load location-based prices</p>
+                    <button class="btn btn-sm btn-primary" onclick="loadLocationBasedPrices()">Retry</button>
+            </div>
+            `;
+        });
+    };
+});
 </script>
 {% endblock %}
