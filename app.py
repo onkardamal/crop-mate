@@ -1406,6 +1406,32 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     
     return R * c
 
+def reverse_geocode(lat, lon):
+    """Reverse geocode coordinates to get district and state using Nominatim (no key)."""
+    try:
+        url = "https://nominatim.openstreetmap.org/reverse"
+        params = {
+            "lat": lat,
+            "lon": lon,
+            "format": "json",
+            "zoom": 10,
+            "addressdetails": 1
+        }
+        headers = {"User-Agent": "CropMate/1.0 (contact: support@cropmate.local)"}
+        resp = requests.get(url, params=params, headers=headers, timeout=6)
+        if resp.status_code == 200:
+            data = resp.json()
+            addr = data.get("address", {})
+            # District may appear as county/district for IN
+            district = addr.get("district") or addr.get("county") or addr.get("state_district")
+            state = addr.get("state")
+            city = addr.get("city") or addr.get("town") or addr.get("village") or addr.get("suburb")
+            return {"district": district, "state": state, "city": city}
+    except Exception:
+        pass
+    return {"district": None, "state": None, "city": None}
+
+
 def get_auto_location_data():
     """Get user's location and weather data automatically."""
     try:
@@ -1414,6 +1440,15 @@ def get_auto_location_data():
         if not location_data:
             return None
         
+        # Enrich with district/state via reverse geocoding (no permission required)
+        geo = reverse_geocode(location_data['lat'], location_data['lon'])
+        if geo.get('district'):
+            location_data['district'] = geo['district']
+        if geo.get('state'):
+            location_data['region'] = geo['state']
+        if geo.get('city') and not location_data.get('city'):
+            location_data['city'] = geo['city']
+
         # Get weather data (with fallback)
         weather_data = get_weather_data(location_data['lat'], location_data['lon'])
         
@@ -1433,7 +1468,8 @@ def get_auto_location_data():
             'weather': weather_data,
             'nearest_state': nearest_state,
             'distance_km': distance,
-            'climate_zone': climate_zone
+            'climate_zone': climate_zone,
+            'current_season': get_current_season()
         }
     except Exception as e:
         print(f"Error in auto location detection: {e}")

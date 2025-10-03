@@ -313,11 +313,40 @@ function autoDetectAll() {
     
     fetch('/api/auto-detect')
         .then(res => res.json())
-        .then(data => {
-            // Fill state
-            if (data.nearest_state) {
-                document.getElementById('stateSelect').value = data.nearest_state;
-                loadDistricts(data.nearest_state);
+        .then(async (data) => {
+            // Fill state first
+            const stateSelect = document.getElementById('stateSelect');
+            const districtSelect = document.getElementById('districtSelect');
+            const detectedState = data.nearest_state || (data.location && (data.location.region || data.location.state));
+            const detectedDistrict = data.location && (data.location.district || data.location.city);
+
+            if (detectedState) {
+                stateSelect.value = detectedState;
+                // Load districts for the state and then try to select detected district
+                await new Promise(resolve => {
+                    // hook into loadDistricts completion by polling for options
+                    loadDistricts(detectedState);
+                    const start = Date.now();
+                    const timer = setInterval(() => {
+                        if (districtSelect.options.length > 1 || Date.now() - start > 3000) {
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100);
+                });
+                if (detectedDistrict) {
+                    const opts = Array.from(districtSelect.options);
+                    let match = opts.find(o => o.textContent.trim().toLowerCase() === detectedDistrict.trim().toLowerCase());
+                    if (match) {
+                        districtSelect.value = match.value;
+                    }
+                }
+            }
+
+            // Auto-select season
+            if (data.current_season) {
+                const seasonSelect = document.getElementById('seasonSelect');
+                seasonSelect.value = data.current_season;
             }
             
             // Fill weather
@@ -327,7 +356,8 @@ function autoDetectAll() {
             }
             
             // Show success message
-            showAlert('Location and weather detected successfully!', 'success');
+            const locText = detectedDistrict ? `${detectedDistrict}, ${detectedState}` : detectedState || 'your area';
+            showAlert(`Detected location: ${locText}. Weather filled.`, 'success');
         })
         .catch(error => {
             console.error('Auto-detect error:', error);

@@ -325,20 +325,24 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show loading state
             showLoadingState();
             
-            // Try to get user's location, but don't fail if it doesn't work
-            let location = null;
+            // Use backend IP-based auto-detect (no browser permission)
+            let auto = null;
             try {
-                location = await getUserLocation();
-                currentLocation = location;
-            } catch (error) {
-                console.log('Location detection failed, using default location');
-                location = {
-                    lat: 28.6139,
-                    lon: 77.2090,
-                    city: 'New Delhi',
-                    state: 'Delhi'
-                };
+                const autoResp = await fetch('/api/auto-detect');
+                auto = await autoResp.json();
+            } catch (e) {
+                console.log('Auto-detect API failed, falling back to Delhi');
+                auto = { location: { lat: 28.6139, lon: 77.2090, city: 'New Delhi', region: 'Delhi', district: 'New Delhi' }, nearest_state: 'Delhi' };
             }
+
+            const location = {
+                lat: auto.location.lat,
+                lon: auto.location.lon,
+                city: auto.location.city || 'Detected Location',
+                state: auto.location.region || auto.nearest_state || 'Unknown',
+                district: auto.location.district || null
+            };
+            currentLocation = location;
             
             // Fetch market prices for the location
             console.log(`Fetching prices for: ${location.city}, ${location.state}`);
@@ -498,33 +502,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.showLoadingState = function() {
         console.log('Showing loading state...');
-        const priceCards = document.querySelectorAll('.price-card');
-        console.log(`Found ${priceCards.length} price cards to show loading state`);
-        priceCards.forEach(card => {
-            card.innerHTML = `
-                <div class="text-center p-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Loading prices for your location...</p>
-            </div>
-            `;
-        });
+        const locationInfo = document.querySelector('.location-info span');
+        if (locationInfo) {
+            locationInfo.textContent = 'Detecting your location and fetching prices...';
+        }
     };
     
     window.showErrorState = function() {
         console.log('Showing error state...');
-        const priceCards = document.querySelectorAll('.price-card');
-        console.log(`Found ${priceCards.length} price cards to show error state`);
-        priceCards.forEach(card => {
-            card.innerHTML = `
-                <div class="text-center p-3">
-                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
-                    <p class="mt-2">Unable to load location-based prices</p>
-                    <button class="btn btn-sm btn-primary" onclick="loadLocationBasedPrices()">Retry</button>
-            </div>
-            `;
-        });
+        const locationInfo = document.querySelector('.location-info span');
+        if (locationInfo) {
+            locationInfo.innerHTML = 'Unable to load location-based prices. ' +
+                '<button class="btn btn-sm btn-primary ms-2" onclick="loadLocationBasedPrices()">Retry</button>';
+        }
     };
 });
 </script>
