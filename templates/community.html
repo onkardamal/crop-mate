@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CropMate - Community</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% extends 'base.html' %}
+{% block title %}CropMate - Community{% endblock %}
+{% block extra_head %}
     <style>
         .community-card {
             border: none;
@@ -29,131 +23,224 @@
             text-align: center;
         }
         
-        .community-icon {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-            color: var(--accent-color);
-        }
-        
-        .forum-card {
-            background: var(--white);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
-            border-left: 4px solid var(--primary-color);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .forum-title {
-            color: var(--primary-color);
+        .community-header h3 {
+            margin: 0;
             font-weight: 600;
-            margin-bottom: var(--spacing-sm);
         }
         
-        .forum-stats {
-            display: flex;
-            gap: var(--spacing-md);
-            margin-top: var(--spacing-sm);
-        }
-        
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            color: var(--gray);
-            font-size: var(--font-size-sm);
+        .community-body {
+            padding: var(--spacing-lg);
         }
         
         .story-card {
-            background: var(--gradient-light);
-            border-radius: var(--radius-md);
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
             padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
             border-left: 4px solid var(--success);
+            transition: var(--transition-normal);
         }
         
-        .story-author {
+        .story-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .story-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .story-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
             font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: var(--spacing-xs);
+            margin-right: var(--spacing-md);
         }
         
-        .story-date {
+        .story-info h6 {
+            margin: 0;
+            color: var(--dark-gray);
+            font-weight: 600;
+        }
+        
+        .story-info small {
+            color: var(--gray);
+        }
+        
+        .story-content {
+            color: var(--dark-gray);
+            line-height: 1.6;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .story-stats {
+            display: flex;
+            gap: var(--spacing-lg);
             color: var(--gray);
             font-size: var(--font-size-sm);
+        }
+        
+        .story-stats span {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
         }
         
         .expert-card {
             background: var(--white);
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
             padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
-            border-left: 4px solid var(--info);
-            box-shadow: var(--shadow-sm);
+            text-align: center;
+            transition: var(--transition-normal);
+            border-top: 4px solid var(--info);
+        }
+        
+        .expert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .expert-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-info);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            margin: 0 auto var(--spacing-md);
         }
         
         .expert-name {
-            color: var(--info);
+            font-size: var(--font-size-lg);
             font-weight: 600;
+            color: var(--dark-gray);
             margin-bottom: var(--spacing-xs);
         }
         
-        .expert-specialty {
-            color: var(--gray);
-            font-size: var(--font-size-sm);
+        .expert-title {
+            color: var(--info);
+            font-weight: 500;
             margin-bottom: var(--spacing-sm);
         }
         
-        .qa-card {
-            background: var(--white);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
-            border-left: 4px solid var(--warning);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .qa-question {
-            color: var(--warning);
-            font-weight: 600;
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .qa-answer {
-            color: var(--gray);
-            font-style: italic;
-        }
-        
-        .event-card {
+        .expert-specialization {
             background: var(--gradient-light);
             border-radius: var(--radius-md);
-            padding: var(--spacing-lg);
+            padding: var(--spacing-sm);
             margin-bottom: var(--spacing-md);
-            border-left: 4px solid var(--secondary-color);
         }
         
-        .event-date {
-            color: var(--secondary-color);
+        .expert-specialization h6 {
+            color: var(--primary-color);
             font-weight: 600;
             margin-bottom: var(--spacing-xs);
         }
         
-        .event-location {
+        .expert-specialization p {
+            color: var(--gray);
+            margin: 0;
+            font-size: var(--font-size-sm);
+        }
+        
+        .expert-contact {
+            background: var(--gradient-primary);
+            color: var(--white);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+        
+        .expert-contact h6 {
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .contact-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-xs);
+            font-size: var(--font-size-sm);
+        }
+        
+        .contact-info i {
+            margin-right: var(--spacing-sm);
+            width: 16px;
+        }
+        
+        .forum-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border-left: 4px solid var(--warning);
+        }
+        
+        .forum-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .forum-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .forum-meta {
             color: var(--gray);
             font-size: var(--font-size-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .forum-content {
+            color: var(--dark-gray);
+            line-height: 1.6;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .forum-stats {
+            display: flex;
+            gap: var(--spacing-lg);
+            color: var(--gray);
+            font-size: var(--font-size-sm);
+        }
+        
+        .forum-stats span {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
         }
         
         .search-section {
-            background: var(--gradient-light);
+            background: var(--white);
             border-radius: var(--radius-lg);
-            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
         }
         
         .search-input {
             border: 2px solid var(--light-gray);
             border-radius: var(--radius-md);
-            padding: var(--spacing-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: var(--font-size-lg);
             width: 100%;
             transition: var(--transition-fast);
         }
@@ -161,633 +248,284 @@
         .search-input:focus {
             border-color: var(--primary-color);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.1);
+            box-shadow: 0 0 0 0.2rem rgba(46, 139, 87, 0.25);
         }
         
-        .category-filter {
-            display: flex;
-            gap: var(--spacing-sm);
-            margin-top: var(--spacing-md);
-            flex-wrap: wrap;
+        .filter-section {
+            background: var(--gradient-light);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
         }
         
-        .filter-chip {
+        .filter-btn {
             background: var(--white);
-            border: 2px solid var(--light-gray);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xs) var(--spacing-md);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            margin: var(--spacing-xs);
             cursor: pointer;
             transition: var(--transition-fast);
-            font-size: var(--font-size-sm);
             font-weight: 500;
         }
         
-        .filter-chip:hover,
-        .filter-chip.active {
-            border-color: var(--primary-color);
+        .filter-btn:hover,
+        .filter-btn.active {
             background: var(--primary-color);
             color: var(--white);
         }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--spacing-lg);
-            margin-bottom: var(--spacing-xl);
-        }
-        
-        .stat-card {
-            background: var(--white);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-lg);
-            text-align: center;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: var(--spacing-xs);
-        }
-        
-        .stat-label {
-            color: var(--gray);
-            font-weight: 500;
-        }
-        
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: var(--spacing-xl);
-        }
-        
-        .loading-spinner.active {
-            display: block;
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: var(--spacing-xl);
-            color: var(--gray);
-        }
     </style>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark" aria-label="Main navigation">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <i class="bi bi-flower1"></i> CropMate
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="/recommend">Crop Recommendation</a></li>
-                <li class="nav-item"><a class="nav-link" href="/compare">Compare Crops</a></li>
-                <li class="nav-item"><a class="nav-link" href="/profitability">Profitability Calculator</a></li>
-                <li class="nav-item"><a class="nav-link" href="/calendar">Seasonal Calendar</a></li>
-                <li class="nav-item"><a class="nav-link" href="/practices">Best Practices</a></li>
-                <li class="nav-item"><a class="nav-link" href="/suitability">Local Suitability</a></li>
-                <li class="nav-item"><a class="nav-link" href="/schemes">Schemes & Support</a></li>
-                <li class="nav-item"><a class="nav-link" href="/market">Market Trends</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/community">Community</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+{% endblock %}
 
-<div class="container main-container">
+{% block content %}
+<div class="container">
     <div class="page-header">
         <h1><i class="bi bi-people"></i> Farmer Community</h1>
-        <p class="subtitle">Connect, learn, and grow with fellow farmers. Share experiences and get expert advice</p>
+        <p class="subtitle">Connect with fellow farmers, share experiences, and learn from success stories</p>
     </div>
 
-    <!-- Community Stats -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h4><i class="bi bi-people-fill"></i></h4>
-                <h5 id="activeMembers">1,247</h5>
-                <small>Active Members</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h4><i class="bi bi-chat-dots"></i></h4>
-                <h5 id="totalPosts">892</h5>
-                <small>Total Posts</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h4><i class="bi bi-trophy"></i></h4>
-                <h5 id="successStories">4</h5>
-                <small>Success Stories</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h4><i class="bi bi-calendar-event"></i></h4>
-                <h5 id="upcomingEvents">3</h5>
-                <small>Upcoming Events</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- Search Box -->
-    <div class="search-box">
-        <div class="row align-items-center">
+    <div class="search-section">
+        <div class="row">
             <div class="col-md-8">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Search forums, stories, Q&A, or expert advice...">
-                </div>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search for stories, experts, or discussions...">
             </div>
             <div class="col-md-4">
-                <button id="searchBtn" class="btn btn-primary w-100">
-                    <i class="bi bi-search"></i> Search
-                </button>
+                <select class="form-select" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="stories">Success Stories</option>
+                    <option value="experts">Expert Advice</option>
+                    <option value="forum">Community Forum</option>
+                </select>
             </div>
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loading" class="loading">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+    <div class="filter-section">
+        <h5 class="mb-3"><i class="bi bi-funnel"></i> Filter Content</h5>
+        <div class="d-flex flex-wrap">
+            <button class="filter-btn active" data-filter="all">All Content</button>
+            <button class="filter-btn" data-filter="stories">Success Stories</button>
+            <button class="filter-btn" data-filter="experts">Expert Advice</button>
+            <button class="filter-btn" data-filter="forum">Community Forum</button>
         </div>
-        <p class="mt-3">Loading community content...</p>
     </div>
 
-    <!-- Main Content Tabs -->
-    <ul class="nav nav-tabs" id="communityTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="forums-tab" data-bs-toggle="tab" data-bs-target="#forums" type="button" role="tab">
-                <i class="bi bi-chat-square-text"></i> Forums
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="stories-tab" data-bs-toggle="tab" data-bs-target="#stories" type="button" role="tab">
-                <i class="bi bi-trophy"></i> Success Stories
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="experts-tab" data-bs-toggle="tab" data-bs-target="#experts" type="button" role="tab">
-                <i class="bi bi-person-badge"></i> Expert Advice
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="qa-tab" data-bs-toggle="tab" data-bs-target="#qa" type="button" role="tab">
-                <i class="bi bi-question-circle"></i> Q&A
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">
-                <i class="bi bi-calendar-event"></i> Events
-            </button>
-        </li>
-    </ul>
+    <div class="row">
+        <!-- Success Stories -->
+        <div class="col-md-8">
+            <h4 class="mb-4"><i class="bi bi-star"></i> Success Stories</h4>
+            
+            <div class="story-card" data-category="stories">
+                <div class="story-header">
+                    <div class="story-avatar">RK</div>
+                    <div class="story-info">
+                        <h6>Rajesh Kumar</h6>
+                        <small>Punjab • Rice Farmer • 5 years experience</small>
+                    </div>
+                </div>
+                <div class="story-content">
+                    "I increased my rice yield by 40% using the recommendations from CropMate. The soil analysis feature helped me understand exactly what my fields needed. Now I'm earning ₹2 lakh more per season!"
+                </div>
+                <div class="story-stats">
+                    <span><i class="bi bi-heart"></i> 24 likes</span>
+                    <span><i class="bi bi-chat"></i> 8 comments</span>
+                    <span><i class="bi bi-share"></i> 3 shares</span>
+                </div>
+            </div>
 
-    <div class="tab-content" id="communityTabContent">
-        <!-- Forums Tab -->
-        <div class="tab-pane fade show active" id="forums" role="tabpanel">
-            <h4><i class="bi bi-chat-square-text"></i> Farmer Forums</h4>
-            <p class="text-muted">Join discussions, share experiences, and learn from fellow farmers</p>
-            <div id="forumsContent"></div>
+            <div class="story-card" data-category="stories">
+                <div class="story-header">
+                    <div class="story-avatar">SM</div>
+                    <div class="story-info">
+                        <h6>Sunita Mehta</h6>
+                        <small>Maharashtra • Cotton Farmer • 8 years experience</small>
+                    </div>
+                </div>
+                <div class="story-content">
+                    "The profitability calculator helped me choose the right crops for my land. I switched from traditional crops to high-value vegetables and doubled my income. The market trends feature is a game-changer!"
+                </div>
+                <div class="story-stats">
+                    <span><i class="bi bi-heart"></i> 18 likes</span>
+                    <span><i class="bi bi-chat"></i> 12 comments</span>
+                    <span><i class="bi bi-share"></i> 5 shares</span>
+                </div>
+            </div>
+
+            <div class="story-card" data-category="stories">
+                <div class="story-header">
+                    <div class="story-avatar">AP</div>
+                    <div class="story-info">
+                        <h6>Amit Patel</h6>
+                        <small>Gujarat • Wheat Farmer • 12 years experience</small>
+                    </div>
+                </div>
+                <div class="story-content">
+                    "The seasonal calendar feature helped me plan my farming activities perfectly. I never miss the optimal sowing time anymore. My wheat production has increased by 25% since using CropMate."
+                </div>
+                <div class="story-stats">
+                    <span><i class="bi bi-heart"></i> 31 likes</span>
+                    <span><i class="bi bi-chat"></i> 6 comments</span>
+                    <span><i class="bi bi-share"></i> 2 shares</span>
+                </div>
+            </div>
+
+            <!-- Community Forum -->
+            <h4 class="mb-4 mt-5"><i class="bi bi-chat-dots"></i> Community Forum</h4>
+            
+            <div class="forum-card" data-category="forum">
+                <div class="forum-header">
+                    <div>
+                        <h5 class="forum-title">Best practices for organic farming</h5>
+                        <div class="forum-meta">Posted by <strong>Vikram Singh</strong> • 2 hours ago</div>
+                    </div>
+                </div>
+                <div class="forum-content">
+                    "I'm planning to switch to organic farming. Can anyone share their experience with organic fertilizers and pest control methods? What are the challenges I should be prepared for?"
+                </div>
+                <div class="forum-stats">
+                    <span><i class="bi bi-reply"></i> 15 replies</span>
+                    <span><i class="bi bi-eye"></i> 45 views</span>
+                    <span><i class="bi bi-heart"></i> 8 likes</span>
+                </div>
+            </div>
+
+            <div class="forum-card" data-category="forum">
+                <div class="forum-header">
+                    <div>
+                        <h5 class="forum-title">Water management during drought</h5>
+                        <div class="forum-meta">Posted by <strong>Priya Sharma</strong> • 5 hours ago</div>
+                    </div>
+                </div>
+                <div class="forum-content">
+                    "With the current water shortage in our region, what are the best water conservation techniques? I'm looking for practical solutions that don't require heavy investment."
+                </div>
+                <div class="forum-stats">
+                    <span><i class="bi bi-reply"></i> 22 replies</span>
+                    <span><i class="bi bi-eye"></i> 67 views</span>
+                    <span><i class="bi bi-heart"></i> 12 likes</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Success Stories Tab -->
-        <div class="tab-pane fade" id="stories" role="tabpanel">
-            <h4><i class="bi bi-trophy"></i> Success Stories</h4>
-            <p class="text-muted">Inspiring stories from farmers who achieved remarkable success</p>
-            <div id="storiesContent"></div>
-        </div>
+        <!-- Expert Advice -->
+        <div class="col-md-4">
+            <h4 class="mb-4"><i class="bi bi-person-badge"></i> Expert Advisors</h4>
+            
+            <div class="expert-card" data-category="experts">
+                <div class="expert-avatar">DR</div>
+                <h5 class="expert-name">Dr. Rajesh Verma</h5>
+                <div class="expert-title">Agricultural Scientist</div>
+                <div class="expert-specialization">
+                    <h6>Specialization</h6>
+                    <p>Soil Science, Crop Nutrition, Sustainable Farming</p>
+                </div>
+                <div class="expert-contact">
+                    <h6>Contact</h6>
+                    <div class="contact-info">
+                        <i class="bi bi-phone"></i>
+                        <span>+91 98765 43210</span>
+                    </div>
+                    <div class="contact-info">
+                        <i class="bi bi-envelope"></i>
+                        <span>rajesh.verma@agri.com</span>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Expert Advice Tab -->
-        <div class="tab-pane fade" id="experts" role="tabpanel">
-            <h4><i class="bi bi-person-badge"></i> Expert Advice</h4>
-            <p class="text-muted">Professional guidance from agricultural experts and scientists</p>
-            <div id="expertsContent"></div>
-        </div>
+            <div class="expert-card" data-category="experts">
+                <div class="expert-avatar">PS</div>
+                <h5 class="expert-name">Prof. Sunita Agarwal</h5>
+                <div class="expert-title">Plant Pathologist</div>
+                <div class="expert-specialization">
+                    <h6>Specialization</h6>
+                    <p>Disease Management, Pest Control, Organic Farming</p>
+                </div>
+                <div class="expert-contact">
+                    <h6>Contact</h6>
+                    <div class="contact-info">
+                        <i class="bi bi-phone"></i>
+                        <span>+91 87654 32109</span>
+                    </div>
+                    <div class="contact-info">
+                        <i class="bi bi-envelope"></i>
+                        <span>sunita.agarwal@plant.com</span>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Q&A Tab -->
-        <div class="tab-pane fade" id="qa" role="tabpanel">
-            <h4><i class="bi bi-question-circle"></i> Questions & Answers</h4>
-            <p class="text-muted">Get answers to your farming questions from the community</p>
-            <div id="qaContent"></div>
-        </div>
-
-        <!-- Events Tab -->
-        <div class="tab-pane fade" id="events" role="tabpanel">
-            <h4><i class="bi bi-calendar-event"></i> Community Events</h4>
-            <p class="text-muted">Upcoming workshops, exhibitions, and farmer meetups</p>
-            <div id="eventsContent"></div>
+            <div class="expert-card" data-category="experts">
+                <div class="expert-avatar">MK</div>
+                <h5 class="expert-name">Mr. Kumar</h5>
+                <div class="expert-title">Market Analyst</div>
+                <div class="expert-specialization">
+                    <h6>Specialization</h6>
+                    <p>Market Trends, Price Analysis, Export Opportunities</p>
+                </div>
+                <div class="expert-contact">
+                    <h6>Contact</h6>
+                    <div class="contact-info">
+                        <i class="bi bi-phone"></i>
+                        <span>+91 76543 21098</span>
+                    </div>
+                    <div class="contact-info">
+                        <i class="bi bi-envelope"></i>
+                        <span>kumar@market.com</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_scripts %}
 <script>
-let currentTab = 'forums';
-
-// Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
-    loadCommunityData();
-    loadCommunityStats();
-    
-    // Event listeners
-    document.getElementById('searchBtn').addEventListener('click', function() {
-        performSearch();
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const contentCards = document.querySelectorAll('.story-card, .expert-card, .forum-card');
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        filterContent();
     });
-    
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            performSearch();
-        }
+
+    // Category filter
+    categoryFilter.addEventListener('change', function() {
+        filterContent();
     });
+
+    // Filter buttons
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            filterContent();
+        });
+    });
+
+    function filterContent() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value;
+        const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+
+        contentCards.forEach(card => {
+            const cardText = card.textContent.toLowerCase();
+            const cardCategory = card.dataset.category;
+
+            const matchesSearch = searchTerm === '' || cardText.includes(searchTerm);
+            const matchesCategory = selectedCategory === '' || cardCategory === selectedCategory;
+            const matchesFilter = activeFilter === 'all' || cardCategory === activeFilter;
+
+            if (matchesSearch && matchesCategory && matchesFilter) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
 });
-
-function showLoading() {
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('communityTabContent').style.display = 'none';
-}
-
-function hideLoading() {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('communityTabContent').style.display = 'block';
-}
-
-async function loadCommunityData() {
-    showLoading();
-    
-    try {
-        // Load all community data
-        await Promise.all([
-            loadForums(),
-            loadSuccessStories(),
-            loadExpertAdvice(),
-            loadQAPosts(),
-            loadEvents()
-        ]);
-    } catch (error) {
-        console.error('Error loading community data:', error);
-        showError('Failed to load community data. Please try again.');
-    }
-    
-    hideLoading();
-}
-
-async function loadCommunityStats() {
-    try {
-        const response = await fetch('/api/community/stats');
-        const data = await response.json();
-        
-        document.getElementById('activeMembers').textContent = data.stats.active_members.toLocaleString();
-        document.getElementById('totalPosts').textContent = data.stats.total_posts.toLocaleString();
-        document.getElementById('successStories').textContent = data.stats.total_success_stories;
-        document.getElementById('upcomingEvents').textContent = data.stats.total_events;
-    } catch (error) {
-        console.error('Error loading stats:', error);
-    }
-}
-
-async function loadForums() {
-    try {
-        const response = await fetch('/api/community/forums');
-        const data = await response.json();
-        
-        const container = document.getElementById('forumsContent');
-        container.innerHTML = '';
-        
-        data.forums.forEach(forum => {
-            const card = document.createElement('div');
-            card.className = 'forum-card';
-            card.innerHTML = `
-                <div class="row">
-                    <div class="col-md-8">
-                        <h5><i class="bi bi-chat-square-text"></i> ${forum.title}</h5>
-                        <p class="text-muted">${forum.description}</p>
-                        <div class="mb-2">
-                            ${forum.tags.map(tag => `<span class="tag-badge">${tag}</span>`).join('')}
-                        </div>
-                        <small class="text-muted">
-                            <i class="bi bi-people"></i> ${forum.members} members | 
-                            <i class="bi bi-chat"></i> ${forum.posts} posts | 
-                            <i class="bi bi-clock"></i> Last active: ${forum.last_activity}
-                        </small>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <span class="badge bg-success">${forum.category}</span>
-                        <br><br>
-                        <button class="btn btn-outline-primary btn-sm" onclick="joinForum(${forum.id})">
-                            <i class="bi bi-arrow-right"></i> Join Discussion
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Error loading forums:', error);
-    }
-}
-
-async function loadSuccessStories() {
-    try {
-        const response = await fetch('/api/community/success-stories');
-        const data = await response.json();
-        
-        const container = document.getElementById('storiesContent');
-        container.innerHTML = '';
-        
-        data.stories.forEach(story => {
-            const card = document.createElement('div');
-            card.className = 'story-card';
-            card.innerHTML = `
-                <div class="row">
-                    <div class="col-md-8">
-                        <h5><i class="bi bi-person-circle"></i> ${story.farmer_name}</h5>
-                        <p><strong>${story.crop}</strong> • ${story.location}</p>
-                        <p>${story.story}</p>
-                        <div class="mb-2">
-                            <strong>Achievements:</strong><br>
-                            ${story.achievements.map(achievement => `<span class="achievement-badge">${achievement}</span>`).join('')}
-                        </div>
-                        <div class="mb-2">
-                            <strong>Tips:</strong><br>
-                            ${story.tips.map(tip => `<span class="tip-badge">${tip}</span>`).join('')}
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <div class="mb-2">
-                            <i class="bi bi-heart"></i> ${story.likes} likes<br>
-                            <i class="bi bi-chat"></i> ${story.comments} comments
-                        </div>
-                        <small class="text-light">${story.date}</small>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Error loading success stories:', error);
-    }
-}
-
-async function loadExpertAdvice() {
-    try {
-        const response = await fetch('/api/community/expert-advice');
-        const data = await response.json();
-        
-        const container = document.getElementById('expertsContent');
-        container.innerHTML = '';
-        
-        data.advice.forEach(expert => {
-            const card = document.createElement('div');
-            card.className = 'expert-card';
-            card.innerHTML = `
-                <div class="row">
-                    <div class="col-md-8">
-                        <h5><i class="bi bi-person-badge"></i> ${expert.expert_name}</h5>
-                        <p class="text-muted">${expert.expertise} • ${expert.qualification}</p>
-                        <h6>${expert.topic}</h6>
-                        <p>${expert.advice}</p>
-                        <div class="mb-2">
-                            <strong>Key Tips:</strong><br>
-                            ${expert.tips.map(tip => `<span class="tip-badge">${tip}</span>`).join('')}
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <span class="badge bg-primary">Expert</span>
-                        <br><br>
-                        <small class="text-muted">${expert.date}</small>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Error loading expert advice:', error);
-    }
-}
-
-async function loadQAPosts() {
-    try {
-        const response = await fetch('/api/community/qa');
-        const data = await response.json();
-        
-        const container = document.getElementById('qaContent');
-        container.innerHTML = '';
-        
-        data.qa_posts.forEach(qa => {
-            const card = document.createElement('div');
-            card.className = 'qa-card';
-            card.innerHTML = `
-                <div class="row">
-                    <div class="col-md-8">
-                        <h5><i class="bi bi-question-circle"></i> ${qa.question}</h5>
-                        <p class="text-muted">Asked by ${qa.asked_by} • ${qa.location} • ${qa.date}</p>
-                        <div class="mb-2">
-                            ${qa.tags.map(tag => `<span class="tag-badge">${tag}</span>`).join('')}
-                        </div>
-                        <div class="answers">
-                            <strong>Answers (${qa.answers.length}):</strong>
-                            ${qa.answers.map(answer => `
-                                <div class="mt-2 p-2 bg-light rounded">
-                                    <p><strong>${answer.answered_by}:</strong> ${answer.answer}</p>
-                                    <small class="text-muted">
-                                        <i class="bi bi-hand-thumbs-up"></i> ${answer.votes} votes • ${answer.date}
-                                    </small>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <span class="badge bg-warning">${qa.category}</span>
-                        <br><br>
-                        <button class="btn btn-outline-primary btn-sm" onclick="addAnswer(${qa.id})">
-                            <i class="bi bi-chat"></i> Add Answer
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Error loading Q&A:', error);
-    }
-}
-
-async function loadEvents() {
-    try {
-        const response = await fetch('/api/community/events');
-        const data = await response.json();
-        
-        const container = document.getElementById('eventsContent');
-        container.innerHTML = '';
-        
-        data.events.forEach(event => {
-            const card = document.createElement('div');
-            card.className = 'event-card';
-            card.innerHTML = `
-                <div class="row">
-                    <div class="col-md-8">
-                        <h5><i class="bi bi-calendar-event"></i> ${event.title}</h5>
-                        <p>${event.description}</p>
-                        <p class="text-muted">
-                            <i class="bi bi-geo-alt"></i> ${event.location}<br>
-                            <i class="bi bi-clock"></i> ${event.date} at ${event.time}<br>
-                            <i class="bi bi-person"></i> Organized by ${event.organizer}
-                        </p>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <span class="badge bg-danger">${event.type}</span>
-                        <br><br>
-                        ${event.registration_required ? 
-                            `<button class="btn btn-outline-danger btn-sm" onclick="registerEvent(${event.id})">
-                                <i class="bi bi-calendar-plus"></i> Register
-                            </button>` :
-                            `<button class="btn btn-outline-success btn-sm" onclick="attendEvent(${event.id})">
-                                <i class="bi bi-calendar-check"></i> Attend
-                            </button>`
-                        }
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Error loading events:', error);
-    }
-}
-
-async function performSearch() {
-    const query = document.getElementById('searchInput').value.trim();
-    if (!query) return;
-    
-    showLoading();
-    
-    try {
-        const response = await fetch(`/api/community/search?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
-        // Display search results
-        displaySearchResults(data.results, query);
-    } catch (error) {
-        console.error('Error performing search:', error);
-        showError('Search failed. Please try again.');
-    }
-    
-    hideLoading();
-}
-
-function displaySearchResults(results, query) {
-    const container = document.getElementById('communityTabContent');
-    container.innerHTML = `
-        <div class="row">
-            <div class="col-12">
-                <h4><i class="bi bi-search"></i> Search Results for "${query}"</h4>
-                <p class="text-muted">Found results across all community sections</p>
-            </div>
-        </div>
-        
-        ${results.forums.length > 0 ? `
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h5><i class="bi bi-chat-square-text"></i> Forums (${results.forums.length})</h5>
-                    ${results.forums.map(forum => `
-                        <div class="forum-card">
-                            <h6>${forum.title}</h6>
-                            <p>${forum.description}</p>
-                            <small class="text-muted">${forum.category} • ${forum.members} members</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
-        
-        ${results.success_stories.length > 0 ? `
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h5><i class="bi bi-trophy"></i> Success Stories (${results.success_stories.length})</h5>
-                    ${results.success_stories.map(story => `
-                        <div class="story-card">
-                            <h6>${story.farmer_name} - ${story.crop}</h6>
-                            <p>${story.story.substring(0, 200)}...</p>
-                            <small class="text-light">${story.location} • ${story.date}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
-        
-        ${results.qa_posts.length > 0 ? `
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h5><i class="bi bi-question-circle"></i> Q&A (${results.qa_posts.length})</h5>
-                    ${results.qa_posts.map(qa => `
-                        <div class="qa-card">
-                            <h6>${qa.question}</h6>
-                            <p class="text-muted">${qa.asked_by} • ${qa.category}</p>
-                            <small class="text-muted">${qa.answers.length} answers</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
-        
-        ${results.expert_advice.length > 0 ? `
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h5><i class="bi bi-person-badge"></i> Expert Advice (${results.expert_advice.length})</h5>
-                    ${results.expert_advice.map(advice => `
-                        <div class="expert-card">
-                            <h6>${advice.expert_name} - ${advice.topic}</h6>
-                            <p>${advice.advice.substring(0, 200)}...</p>
-                            <small class="text-muted">${advice.expertise}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
-        
-        ${Object.values(results).every(arr => arr.length === 0) ? `
-            <div class="text-center">
-                <i class="bi bi-search" style="font-size: 3rem; color: #6c757d;"></i>
-                <p class="mt-3">No results found for "${query}"</p>
-                <p class="text-muted">Try different keywords or browse our community sections</p>
-            </div>
-        ` : ''}
-    `;
-}
-
-function joinForum(forumId) {
-    alert(`Joining forum ${forumId}... This feature will be implemented soon!`);
-}
-
-function addAnswer(qaId) {
-    alert(`Adding answer to Q&A ${qaId}... This feature will be implemented soon!`);
-}
-
-function registerEvent(eventId) {
-    alert(`Registering for event ${eventId}... This feature will be implemented soon!`);
-}
-
-function attendEvent(eventId) {
-    alert(`Attending event ${eventId}... This feature will be implemented soon!`);
-}
-
-function showError(message) {
-    const container = document.getElementById('communityTabContent');
-    container.innerHTML = `
-        <div class="alert alert-danger" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> ${message}
-        </div>
-    `;
-}
 </script>
-</body>
-</html> 
+{% endblock %}
