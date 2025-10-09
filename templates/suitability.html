@@ -68,6 +68,11 @@
             padding: var(--spacing-lg);
             box-shadow: var(--shadow-md);
             margin-bottom: var(--spacing-lg);
+            height: 360px; /* Constrain chart height */
+        }
+        
+        .chart-container canvas {
+            height: 100% !important; /* Fill constrained container height */
         }
         
         .stats-grid {
@@ -130,6 +135,7 @@
         <h1><i class="bi bi-geo-alt"></i> Local Suitability</h1>
         <p class="subtitle">Find the best crops for your specific location and climate conditions</p>
     </div>
+    <div id="suitabilityError" class="alert alert-danger" style="display: none;"></div>
 
     <div class="location-selector">
         <div class="row align-items-center">
@@ -253,11 +259,9 @@ document.addEventListener('DOMContentLoaded', function() {
         'Uttarakhand': ['Dehradun', 'Haridwar', 'Roorkee', 'Haldwani', 'Rudrapur']
     };
     
-    // Update districts when state changes
-    stateSelect.addEventListener('change', function() {
-        const selectedState = this.value;
+    // Helper to populate districts for a given state
+    function loadDistricts(selectedState) {
         districtSelect.innerHTML = '<option value="">Choose District...</option>';
-        
         if (selectedState && districtData[selectedState]) {
             districtData[selectedState].forEach(district => {
                 const option = document.createElement('option');
@@ -266,6 +270,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 districtSelect.appendChild(option);
             });
         }
+    }
+    
+    // Update districts when state changes
+    stateSelect.addEventListener('change', function() {
+        const selectedState = this.value;
+        loadDistricts(selectedState);
     });
     
     // Filter functionality
@@ -279,38 +289,85 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    function analyzeSuitability() {
-        const state = stateSelect.value;
-        const district = districtSelect.value;
+    // Auto-run analysis on load using local auto-detect if no state chosen
+    setTimeout(() => {
+        try {
+            if (!stateSelect.value) {
+                analyzeSuitability();
+            }
+        } catch (e) { console.error('Auto-analysis failed', e); }
+    }, 200);
+
+    async function analyzeSuitability() {
+        let state = stateSelect.value;
+        let district = districtSelect.value;
         
-        if (!state) {
-            alert('Please select a state first');
-            return;
+        try {
+            console.log('Analyzing suitability for state:', state || '(auto)', 'district:', district || '(auto)');
+            let data;
+            // If state not selected, auto-detect locally
+            if (!state) {
+                // Try browser geolocation first
+                try {
+                    const coords = await new Promise((resolve, reject) => {
+                        if (!navigator.geolocation) return reject(new Error('Geolocation unsupported'));
+                        navigator.geolocation.getCurrentPosition(
+                            pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+                            err => reject(err),
+                            { enableHighAccuracy: true, timeout: 6000, maximumAge: 300000 }
+                        );
+                    });
+                    const coordRes = await fetch(`/api/suitability/from-coords?lat=${encodeURIComponent(coords.lat)}&lon=${encodeURIComponent(coords.lon)}`);
+                    data = await coordRes.json();
+                } catch (geoErr) {
+                    // Fallback to server IP auto-detect
+                    const localRes = await fetch('/api/suitability/local');
+                    data = await localRes.json();
+                }
+                data = await localRes.json();
+                console.log('Local suitability payload:', data);
+                if (data && data.state) {
+                    state = data.state;
+                    stateSelect.value = state;
+                    // load districts then set
+                    loadDistricts(state);
+                    if (data.district) {
+                        const opt = Array.from(districtSelect.options).find(o => o.textContent.trim().toLowerCase() === data.district.trim().toLowerCase());
+                        if (opt) districtSelect.value = opt.value;
+                        district = data.district;
+                    }
+                }
+            }
+            
+            // If we don't already have data from local endpoint, fetch by state
+            if (!data) {
+                const res = await fetch(`/api/suitability/${encodeURIComponent(state)}`);
+                data = await res.json();
+                console.log('State suitability payload:', data);
+            }
+            
+            if (!data || !data.suitable_crops) throw new Error('No data');
+            const crops = data.suitable_crops.map(c => ({
+                name: c['crop_name'] || c['crop'] || c['name'] || 'Crop',
+                suitability: c['suitability_label'] || (c['suitability_score'] >= 75 ? 'high' : c['suitability_score'] >= 55 ? 'medium' : 'low'),
+                score: Math.round(c['suitability_score'] || c['score'] || 60),
+                reason: c['reason'] || 'Based on local climate, soil and market factors'
+            }));
+            console.log('Normalized crops:', crops);
+            displayCrops(crops);
+            updateStats(crops);
+            updateChart(crops);
+            suitabilityStats.style.display = 'grid';
+        } catch (e) {
+            console.error('Suitability load failed', e);
+            const err = document.getElementById('suitabilityError');
+            if (err) { err.textContent = 'Could not load suitability. Please try again.'; err.style.display = 'block'; }
         }
-        
-        // Simulate analysis
-        const crops = generateSuitabilityData(state, district);
-        displayCrops(crops);
-        updateStats(crops);
-        updateChart(crops);
-        suitabilityStats.style.display = 'grid';
     }
+    // Expose for the "Analyze Suitability" button onclick
+    window.analyzeSuitability = analyzeSuitability;
     
-    function generateSuitabilityData(state, district) {
-        // Sample suitability data based on location
-        const baseCrops = [
-            { name: 'Rice', suitability: 'high', score: 85, reason: 'Ideal climate and soil conditions' },
-            { name: 'Wheat', suitability: 'medium', score: 65, reason: 'Good soil but limited water availability' },
-            { name: 'Maize', suitability: 'high', score: 80, reason: 'Excellent growing conditions' },
-            { name: 'Cotton', suitability: 'medium', score: 70, reason: 'Suitable climate but requires irrigation' },
-            { name: 'Sugarcane', suitability: 'high', score: 90, reason: 'Perfect climate and soil' },
-            { name: 'Jute', suitability: 'low', score: 45, reason: 'Unsuitable climate conditions' },
-            { name: 'Barley', suitability: 'medium', score: 60, reason: 'Moderate suitability' },
-            { name: 'Mustard', suitability: 'high', score: 75, reason: 'Good for this region' }
-        ];
-        
-        return baseCrops;
-    }
+    // Removed demo generator; now using backend data
     
     function displayCrops(crops) {
         cropsContainer.innerHTML = '';

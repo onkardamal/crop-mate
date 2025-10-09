@@ -1,0 +1,255 @@
+<!-- Location Selector Modal -->
+<div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="locationModalLabel">
+                    <i class="bi bi-geo-alt-fill text-primary"></i> Set Your Location
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="locationSearch" class="form-label">
+                        <i class="bi bi-search"></i> Search for your city:
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="locationSearch" 
+                               placeholder="Type city name (e.g., Ichalkaranji, Mumbai, Delhi...)" 
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div id="locationSuggestions" class="list-group mt-2" style="display: none; max-height: 300px; overflow-y: auto;"></div>
+                    <small class="text-muted">Start typing to search from 200+ Indian cities</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Or select from major Indian cities:</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="list-group">
+                <button type="button" class="list-group-item list-group-item-action" data-city="Ichalkaranji" data-state="Maharashtra">
+                    <i class="bi bi-geo-alt"></i> Ichalkaranji, Maharashtra
+                </button>
+                <button type="button" class="list-group-item list-group-item-action" data-city="Mumbai" data-state="Maharashtra">
+                    <i class="bi bi-geo-alt"></i> Mumbai, Maharashtra
+                </button>
+                                <button type="button" class="list-group-item list-group-item-action" data-city="Delhi" data-state="Delhi">
+                                    <i class="bi bi-geo-alt"></i> Delhi, Delhi
+                                </button>
+                                <button type="button" class="list-group-item list-group-item-action" data-city="Bangalore" data-state="Karnataka">
+                                    <i class="bi bi-geo-alt"></i> Bangalore, Karnataka
+                                </button>
+                                <button type="button" class="list-group-item list-group-item-action" data-city="Kolkata" data-state="West Bengal">
+                                    <i class="bi bi-geo-alt"></i> Kolkata, West Bengal
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="list-group">
+                                <button type="button" class="list-group-item list-group-item-action" data-city="Chennai" data-state="Tamil Nadu">
+                                    <i class="bi bi-geo-alt"></i> Chennai, Tamil Nadu
+                                </button>
+                                <button type="button" class="list-group-item list-group-item-action" data-city="Hyderabad" data-state="Telangana">
+                                    <i class="bi bi-geo-alt"></i> Hyderabad, Telangana
+                                </button>
+                                <button type="button" class="list-group-item list-group-item-action" data-city="Pune" data-state="Maharashtra">
+                                    <i class="bi bi-geo-alt"></i> Pune, Maharashtra
+                                </button>
+                                <button type="button" class="list-group-item list-group-item-action" data-city="Ahmedabad" data-state="Gujarat">
+                                    <i class="bi bi-geo-alt"></i> Ahmedabad, Gujarat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Why set your location?</strong><br>
+                    CropMate uses your location to provide:
+                    <ul class="mb-0 mt-2">
+                        <li>Local market prices and trends</li>
+                        <li>Climate-specific crop recommendations</li>
+                        <li>Seasonal farming calendar</li>
+                        <li>Regional government schemes</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmLocation" disabled>
+                    <i class="bi bi-check-circle"></i> Set Location
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const locationModal = new bootstrap.Modal(document.getElementById('locationModal'));
+    const locationSearch = document.getElementById('locationSearch');
+    const locationSuggestions = document.getElementById('locationSuggestions');
+    const confirmBtn = document.getElementById('confirmLocation');
+    let selectedLocation = null;
+
+    // Load comprehensive cities database
+    let indianCities = [];
+    
+    // Load cities from external database
+    fetch('/static/cities-database.js')
+        .then(response => response.text())
+        .then(data => {
+            // Extract cities from the database
+            const citiesMatch = data.match(/const INDIAN_CITIES = \[([\s\S]*?)\];/);
+            if (citiesMatch) {
+                // Parse the cities array (simplified parsing)
+                const citiesText = citiesMatch[1];
+                const cityMatches = citiesText.match(/\{ city: '([^']+)', state: '([^']+)', district: '([^']+)', region: '([^']+)' \}/g);
+                if (cityMatches) {
+                    indianCities = cityMatches.map(match => {
+                        const parts = match.match(/city: '([^']+)', state: '([^']+)', district: '([^']+)', region: '([^']+)'/);
+                        return {
+                            city: parts[1],
+                            state: parts[2],
+                            district: parts[3],
+                            region: parts[4]
+                        };
+                    });
+                }
+            }
+        })
+        .catch(() => {
+            // Fallback to basic cities if database fails to load
+            indianCities = [
+                { city: 'Ichalkaranji', state: 'Maharashtra', district: 'Kolhapur', region: 'Western Maharashtra' },
+                { city: 'Mumbai', state: 'Maharashtra', district: 'Mumbai', region: 'Konkan' },
+                { city: 'Pune', state: 'Maharashtra', district: 'Pune', region: 'Western Maharashtra' },
+                { city: 'Kolhapur', state: 'Maharashtra', district: 'Kolhapur', region: 'Western Maharashtra' },
+                { city: 'Nagpur', state: 'Maharashtra', district: 'Nagpur', region: 'Vidarbha' },
+                { city: 'Nashik', state: 'Maharashtra', district: 'Nashik', region: 'Northern Maharashtra' },
+                { city: 'Aurangabad', state: 'Maharashtra', district: 'Aurangabad', region: 'Marathwada' },
+                { city: 'Solapur', state: 'Maharashtra', district: 'Solapur', region: 'Western Maharashtra' },
+                { city: 'Sangli', state: 'Maharashtra', district: 'Sangli', region: 'Western Maharashtra' },
+                { city: 'Satara', state: 'Maharashtra', district: 'Satara', region: 'Western Maharashtra' },
+                { city: 'Delhi', state: 'Delhi', district: 'Central Delhi', region: 'National Capital Region' },
+                { city: 'Bangalore', state: 'Karnataka', district: 'Bangalore Urban', region: 'South Karnataka' },
+                { city: 'Chennai', state: 'Tamil Nadu', district: 'Chennai', region: 'Northern Tamil Nadu' },
+                { city: 'Hyderabad', state: 'Telangana', district: 'Hyderabad', region: 'Central Telangana' },
+                { city: 'Kolkata', state: 'West Bengal', district: 'Kolkata', region: 'South Bengal' },
+                { city: 'Ahmedabad', state: 'Gujarat', district: 'Ahmedabad', region: 'Central Gujarat' },
+                { city: 'Jaipur', state: 'Rajasthan', district: 'Jaipur', region: 'Eastern Rajasthan' },
+                { city: 'Lucknow', state: 'Uttar Pradesh', district: 'Lucknow', region: 'Central Uttar Pradesh' },
+                { city: 'Bhopal', state: 'Madhya Pradesh', district: 'Bhopal', region: 'Central Madhya Pradesh' },
+                { city: 'Indore', state: 'Madhya Pradesh', district: 'Indore', region: 'Western Madhya Pradesh' }
+            ];
+        });
+
+    // Search functionality
+    locationSearch.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        if (query.length < 2) {
+            locationSuggestions.style.display = 'none';
+            return;
+        }
+
+        const filtered = indianCities.filter(city => 
+            city.city.toLowerCase().includes(query) || 
+            city.state.toLowerCase().includes(query)
+        );
+
+        if (filtered.length > 0) {
+            locationSuggestions.innerHTML = filtered.map(city => 
+                `<button type="button" class="list-group-item list-group-item-action" 
+                 data-city="${city.city}" data-state="${city.state}">
+                    <i class="bi bi-geo-alt"></i> ${city.city}, ${city.state}
+                 </button>`
+            ).join('');
+            locationSuggestions.style.display = 'block';
+        } else {
+            locationSuggestions.style.display = 'none';
+        }
+    });
+
+    // Handle city selection
+    function handleCitySelection(element) {
+        const city = element.dataset.city;
+        const state = element.dataset.state;
+        
+        selectedLocation = { city, state, country: 'India' };
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `<i class="bi bi-check-circle"></i> Set ${city}, ${state}`;
+        
+        // Highlight selected item
+        document.querySelectorAll('.list-group-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        element.classList.add('active');
+    }
+
+    // Event delegation for city selection
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.list-group-item[data-city]')) {
+            handleCitySelection(e.target.closest('.list-group-item[data-city]'));
+            locationSuggestions.style.display = 'none';
+        }
+    });
+
+    // Confirm location
+    confirmBtn.addEventListener('click', function() {
+        if (selectedLocation) {
+            if (window.locationDetector) {
+                window.locationDetector.setLocation(selectedLocation);
+            }
+            
+            // Save to backend
+            fetch('/api/location/set', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ location: selectedLocation })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    locationModal.hide();
+                    // Show success message
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                    alert.style.top = '20px';
+                    alert.style.right = '20px';
+                    alert.style.zIndex = '9999';
+                    alert.innerHTML = `
+                        <i class="bi bi-check-circle"></i> Location set to ${selectedLocation.city}, ${selectedLocation.state}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.body.appendChild(alert);
+                    setTimeout(() => alert.remove(), 3000);
+                }
+            });
+        }
+    });
+
+    // Clear search function
+    window.clearSearch = function() {
+        locationSearch.value = '';
+        locationSuggestions.style.display = 'none';
+        selectedLocation = null;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Set Location';
+    };
+
+    // Show modal when location indicator is clicked
+    const locationIndicator = document.getElementById('location-indicator');
+    if (locationIndicator) {
+        locationIndicator.addEventListener('click', function() {
+            locationModal.show();
+        });
+        locationIndicator.style.cursor = 'pointer';
+        locationIndicator.title = 'Click to change location';
+    }
+});
+</script>

@@ -155,6 +155,30 @@
                 <li class="nav-item"><a class="nav-link {% if '/schemes' in request.path %}active{% endif %}" href="/schemes" title="Schemes & Support">Schemes</a></li>
                 <li class="nav-item"><a class="nav-link {% if '/market' in request.path %}active{% endif %}" href="/market" title="Market Trends">Market</a></li>
                 <li class="nav-item"><a class="nav-link {% if '/community' in request.path %}active{% endif %}" href="/community" title="Community">Community</a></li>
+                <li class="nav-item">
+                    <div class="dropdown">
+                        <span id="location-indicator" class="badge bg-primary ms-2 dropdown-toggle" 
+                              data-bs-toggle="dropdown" aria-expanded="false" 
+                              style="cursor: pointer;" title="Click to change location">
+                            <i class="bi bi-geo-alt-fill"></i> Detecting...
+                        </span>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">
+                                <i class="bi bi-geo-alt"></i> Location Settings
+                            </h6></li>
+                            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#locationModal">
+                                <i class="bi bi-geo-alt"></i> Change Location
+                            </button></li>
+                            <li><button class="dropdown-item" onclick="refreshLocation()">
+                                <i class="bi bi-arrow-clockwise"></i> Auto-Detect
+                            </button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><small class="dropdown-item-text text-muted">
+                                Location helps with local recommendations
+                            </small></li>
+                        </ul>
+                    </div>
+                </li>
             </ul>
         </div>
     </div>
@@ -166,6 +190,18 @@
     <div>© 2025 CropMate</div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='cities-database.js') }}"></script>
+<script src="{{ url_for('static', filename='location-detector.js') }}"></script>
+{% include 'location_selector.html' %}
+
+<script>
+// Global location refresh function
+function refreshLocation() {
+    if (window.locationDetector) {
+        window.locationDetector.detectLocation();
+    }
+}
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html> 

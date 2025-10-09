@@ -247,6 +247,14 @@
         <!-- Crop Selection -->
         <div class="comparison-section section">
             <h3><i class="bi bi-grid"></i> Select Crops to Compare</h3>
+            <div id="compareNotice" class="alert alert-info" role="alert" aria-live="polite" style="display:none;">
+                You can select up to two crops. Deselect one to choose another.
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button id="exportCsvBtn" class="btn btn-outline-primary btn-sm" type="button"><i class="bi bi-download"></i> Export CSV</button>
+                <button id="shareLinkBtn" class="btn btn-outline-secondary btn-sm" type="button"><i class="bi bi-share"></i> Share Link</button>
+                <input id="shareLinkInput" type="text" class="form-control form-control-sm" style="max-width: 420px; display:none;" readonly>
+            </div>
             <div class="crop-grid" id="cropSelector">
                 <!-- Crops will be loaded here by JS -->
             </div>
@@ -295,6 +303,7 @@
                         <canvas id="profitabilityChart"></canvas>
                     </div>
                     <div id="soilDetails2">Soil details 2 will appear here.</div>
+                    <div id="profitabilityDetails" class="mt-3"></div>
                 </div>
             </div>
             <div class="map-container mt-4" id="cropMap"></div>
@@ -350,6 +359,15 @@
             
             // Load crops
             loadCrops();
+
+            // Wire buttons
+            const exportBtn = document.getElementById('exportCsvBtn');
+            const shareBtn = document.getElementById('shareLinkBtn');
+            if (exportBtn) exportBtn.addEventListener('click', exportComparisonCsv);
+            if (shareBtn) shareBtn.addEventListener('click', generateShareLink);
+
+            // Preselect from URL if provided
+            preselectFromUrl();
         });
 
         // Region coordinates
@@ -394,6 +412,78 @@
 
         let allCrops = [];
         let selectedCrops = [];
+        function preselectFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const c1 = params.get('c1');
+            const c2 = params.get('c2');
+            const toSelect = [c1, c2].filter(Boolean);
+            if (!toSelect.length) return;
+            const interval = setInterval(() => {
+                if (allCrops.length === 0) return;
+                clearInterval(interval);
+                toSelect.forEach(name => {
+                    const card = document.querySelector(`.crop-card[data-crop="${CSS.escape(name)}"]`);
+                    if (card) {
+                        if (!selectedCrops.includes(name) && selectedCrops.length < 2) {
+                            selectedCrops.push(name);
+                            card.classList.add('selected');
+                        }
+                    }
+                });
+                updateSelectedCropsIndicator();
+                if (selectedCrops.length === 2) updateComparison();
+            }, 150);
+        }
+
+        function generateShareLink() {
+            const input = document.getElementById('shareLinkInput');
+            if (selectedCrops.length === 0) {
+                input.style.display = 'none';
+                return;
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.delete('c1');
+            url.searchParams.delete('c2');
+            if (selectedCrops[0]) url.searchParams.set('c1', selectedCrops[0]);
+            if (selectedCrops[1]) url.searchParams.set('c2', selectedCrops[1]);
+            input.value = url.toString();
+            input.style.display = 'block';
+            input.select();
+            input.setSelectionRange(0, input.value.length);
+            try { document.execCommand('copy'); } catch (e) {}
+        }
+
+        function exportComparisonCsv() {
+            if (selectedCrops.length !== 2) {
+                const notice = document.getElementById('compareNotice');
+                if (notice) {
+                    notice.style.display = 'block';
+                    notice.textContent = 'Select two crops to export comparison as CSV.';
+                    setTimeout(() => { notice.style.display = 'none'; }, 2500);
+                }
+                return;
+            }
+            const rows = [];
+            const headers = ['Feature', selectedCrops[0], selectedCrops[1]];
+            rows.push(headers);
+            const tableBody = document.getElementById('comparisonTableBody');
+            if (!tableBody) return;
+            tableBody.querySelectorAll('tr').forEach(tr => {
+                const cells = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
+                if (cells.length === 3) rows.push(cells);
+            });
+            const csv = rows.map(r => r.map(v => '"' + v.replace(/"/g, '""') + '"').join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `comparison_${selectedCrops[0]}_vs_${selectedCrops[1]}.csv`);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
 
         // Function to load crop data
         async function loadCrops() {
@@ -539,14 +629,14 @@
                     selectedCrops.push(crop);
                     card.classList.add('selected');
                 } else {
-                    // If already have 2 crops selected, replace the first one
-                    const firstCard = document.querySelector('.crop-card.selected');
-                    if (firstCard) {
-                        firstCard.classList.remove('selected');
+                    // Inform user and ignore extra selection
+                    const notice = document.getElementById('compareNotice');
+                    if (notice) {
+                        notice.style.display = 'block';
+                        notice.textContent = 'You can only compare two crops at a time.';
+                        setTimeout(() => { notice.style.display = 'none'; }, 2500);
                     }
-                    selectedCrops.shift();
-                    selectedCrops.push(crop);
-                    card.classList.add('selected');
+                    return;
                 }
             } else {
                 selectedCrops.splice(index, 1);
@@ -591,6 +681,7 @@
                 updateBasicInfo(crop1, crop2);
                 updateClimateChart(crop1, crop2);
                 updateSoilDetails(crop1, crop2);
+                updateProfitabilityChart(crop1, crop2);
                 // Only show comparison if all required elements exist
                 if (
                     document.getElementById('comparisonTableBody') &&
@@ -603,6 +694,7 @@
                     document.getElementById('cropMap')
                 ) {
                     document.getElementById('comparisonContent').style.display = 'block';
+                    document.getElementById('comparisonContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
                     initializeMap();
                     setTimeout(() => {
                         map.invalidateSize();

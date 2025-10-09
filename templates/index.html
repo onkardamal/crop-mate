@@ -164,23 +164,6 @@
 </div>
 
 <div class="container">
-    <!-- Auto-location feature -->
-    <div class="auto-location-card" id="autoLocationCard" style="display: none;">
-        <div class="location-status">
-            <i class="bi bi-geo-alt-fill location-icon"></i>
-            <div>
-                <h5 class="mb-1">Auto-Detected Location</h5>
-                <p class="mb-0 text-muted" id="locationText">Detecting your location...</p>
-            </div>
-            <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshLocation()">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-        </div>
-        <div class="weather-info" id="weatherInfo" style="display: none;">
-            <h6 class="mb-2"><i class="bi bi-cloud-sun"></i> Current Weather</h6>
-            <div id="weatherDetails"></div>
-        </div>
-    </div>
 
     <div class="stats-section section" aria-label="Platform statistics">
         <div class="row justify-content-center align-items-stretch">
@@ -405,5 +388,6 @@ async function detectLocation() {
 function refreshLocation() {
     detectLocation();
 }
+
 </script>
 {% endblock %}

@@ -887,6 +887,54 @@ def get_location_suitability(state_name):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/suitability/local')
+def get_local_suitability():
+    """Auto-detect user's location and return local suitability with district/state."""
+    try:
+        auto = get_auto_location_data()
+        if not auto:
+            return jsonify({"error": "Auto-detect failed"}), 500
+        state = auto.get('nearest_state')
+        if not state or state not in INDIAN_STATES:
+            return jsonify({"error": "Detected state not supported"}), 400
+        loc = auto.get('location', {})
+        district = loc.get('district') or loc.get('city')
+        suitable_crops = get_suitable_crops_for_location(state, limit=15)
+        return jsonify({
+            "state": state,
+            "district": district,
+            "state_info": INDIAN_STATES[state],
+            "suitable_crops": suitable_crops
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/suitability/from-coords')
+def get_suitability_from_coords():
+    """Compute suitability using browser-provided coordinates (client geolocation)."""
+    try:
+        lat = request.args.get('lat', type=float)
+        lon = request.args.get('lon', type=float)
+        if lat is None or lon is None:
+            return jsonify({"error": "Missing lat/lon"}), 400
+        # Reverse geocode to enrich location details
+        geo = reverse_geocode(lat, lon) or {}
+        # Determine nearest state
+        nearest_state, distance = find_nearest_state(lat, lon)
+        if not nearest_state or nearest_state not in INDIAN_STATES:
+            return jsonify({"error": "Coordinates outside supported regions"}), 400
+        district = geo.get('district') or geo.get('city')
+        suitable_crops = get_suitable_crops_for_location(nearest_state, limit=15)
+        return jsonify({
+            "state": nearest_state,
+            "district": district,
+            "distance_km": distance,
+            "state_info": INDIAN_STATES[nearest_state],
+            "suitable_crops": suitable_crops
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/suitability/crop/<crop_name>/<state_name>')
 def get_crop_location_details(crop_name, state_name):
     """Get detailed suitability analysis for a specific crop in a specific state."""
@@ -2537,6 +2585,105 @@ def test_images():
             if filename.endswith('.png'):
                 images.append(filename)
     return jsonify({"images": images, "count": len(images)})
+
+# Location Detection Routes
+@app.route('/api/location/detect', methods=['GET'])
+def detect_location():
+    """Detect user location via IP geolocation"""
+    try:
+        from location_service import location_service
+        location = location_service.detect_location_by_ip()
+        return jsonify({
+            'success': True,
+            'location': location
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'location': {
+                'city': 'Auto-detect',
+                'state': 'Please select',
+                'country': 'India',
+                'auto_detect': True
+            }
+        }), 500
+
+@app.route('/api/location/reverse-geocode', methods=['POST'])
+def reverse_geocode():
+    """Reverse geocode coordinates to location"""
+    try:
+        from location_service import location_service
+        data = request.get_json()
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        
+        if not latitude or not longitude:
+            return jsonify({
+                'success': False,
+                'error': 'Latitude and longitude required'
+            }), 400
+        
+        location = location_service.reverse_geocode(latitude, longitude)
+        return jsonify({
+            'success': True,
+            'location': location
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/location/set', methods=['POST'])
+def set_location():
+    """Set user's preferred location"""
+    try:
+        data = request.get_json()
+        location = data.get('location')
+        
+        if not location or not location.get('city'):
+            return jsonify({
+                'success': False,
+                'error': 'Valid location with city required'
+            }), 400
+        
+        # Store in session or database
+        session['user_location'] = location
+        
+        return jsonify({
+            'success': True,
+            'location': location
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/location/current', methods=['GET'])
+def get_current_location():
+    """Get user's current location"""
+    try:
+        user_location = session.get('user_location')
+        if user_location:
+            return jsonify({
+                'success': True,
+                'location': user_location
+            })
+        
+        # Fallback to IP detection
+        from location_service import location_service
+        location = location_service.detect_location_by_ip()
+        return jsonify({
+            'success': True,
+            'location': location
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

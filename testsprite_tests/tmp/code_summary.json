@@ -1,0 +1,201 @@
+{
+  "tech_stack": [
+    "python",
+    "flask",
+    "scikit-learn",
+    "pandas",
+    "numpy",
+    "bootstrap",
+    "vanilla-js"
+  ],
+  "features": [
+    {
+      "name": "Core Pages",
+      "description": "Static/dynamic HTML routes rendered by Flask templates.",
+      "files": [
+        "app.py",
+        "templates/",
+        "static/"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": { "title": "CropMate Core Pages", "version": "1.0.0" },
+        "servers": [ { "url": "http://localhost:5000" } ],
+        "paths": {
+          "/": { "get": { "summary": "Home page", "responses": {"200": {"description": "OK"}} } },
+          "/recommend": { "get": { "summary": "Crop recommendation page", "responses": {"200": {"description": "OK"}} } },
+          "/compare": { "get": { "summary": "Crop comparison page", "responses": {"200": {"description": "OK"}} } },
+          "/profitability": { "get": { "summary": "Profitability calculator page", "responses": {"200": {"description": "OK"}} } },
+          "/calendar": { "get": { "summary": "Seasonal calendar page", "responses": {"200": {"description": "OK"}} } },
+          "/market": { "get": { "summary": "Market trends page", "responses": {"200": {"description": "OK"}} } },
+          "/community": { "get": { "summary": "Community page", "responses": {"200": {"description": "OK"}} } },
+          "/schemes": { "get": { "summary": "Government schemes page", "responses": {"200": {"description": "OK"}} } }
+        }
+      }
+    },
+    {
+      "name": "ML & Data APIs",
+      "description": "Programmatic endpoints for predictions and data access.",
+      "files": [
+        "app.py",
+        "utils.py",
+        "data_loader.py",
+        "model.pkl",
+        "minmaxscaler.pkl",
+        "standscaler.pkl"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": { "title": "CropMate ML & Data APIs", "version": "1.0.0" },
+        "servers": [ { "url": "http://localhost:5000" } ],
+        "paths": {
+          "/predict": {
+            "post": {
+              "summary": "Basic crop prediction",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "N": { "type": "number" },
+                        "P": { "type": "number" },
+                        "K": { "type": "number" },
+                        "temperature": { "type": "number" },
+                        "humidity": { "type": "number" },
+                        "ph": { "type": "number" },
+                        "rainfall": { "type": "number" }
+                      },
+                      "required": ["N","P","K","temperature","humidity","ph","rainfall"]
+                    }
+                  }
+                }
+              },
+              "responses": { "200": { "description": "Prediction result" } }
+            }
+          },
+          "/api/smart-recommend": {
+            "post": {
+              "summary": "Advanced multi-factor recommendation",
+              "requestBody": { "required": true },
+              "responses": { "200": { "description": "Recommendation result" } }
+            }
+          },
+          "/api/crops": {
+            "get": {
+              "summary": "List all crops",
+              "responses": { "200": { "description": "Array of crops" } }
+            }
+          },
+          "/api/crops/{crop_name}": {
+            "get": {
+              "summary": "Get crop details",
+              "parameters": [ { "in": "path", "name": "crop_name", "required": true, "schema": {"type": "string"} } ],
+              "responses": { "200": { "description": "Crop details" }, "404": { "description": "Not found" } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Calendar & Seasonal APIs",
+      "description": "Endpoints for seasonal data and filtering.",
+      "files": [ "app.py", "data_loader.py" ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": { "title": "CropMate Calendar APIs", "version": "1.0.0" },
+        "servers": [ { "url": "http://localhost:5000" } ],
+        "paths": {
+          "/api/calendar/season/{season}": {
+            "get": {
+              "summary": "Get crops by season",
+              "parameters": [ { "in": "path", "name": "season", "required": true, "schema": {"type": "string", "enum": ["Kharif","Rabi","Zaid"]} } ],
+              "responses": { "200": { "description": "List of crops" } }
+            }
+          },
+          "/api/calendar/month/{month}": {
+            "get": {
+              "summary": "Get crops by month",
+              "parameters": [ { "in": "path", "name": "month", "required": true, "schema": {"type": "string"} } ],
+              "responses": { "200": { "description": "List of crops" } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Location & Suitability APIs",
+      "description": "State-level suitability and crop-state analysis.",
+      "files": [ "app.py", "data_loader.py", "utils.py" ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": { "title": "CropMate Suitability APIs", "version": "1.0.0" },
+        "servers": [ { "url": "http://localhost:5000" } ],
+        "paths": {
+          "/api/states": { "get": { "summary": "List Indian states", "responses": {"200": {"description": "Array of states"}} } },
+          "/api/suitability/{state_name}": {
+            "get": {
+              "summary": "Suitable crops for a state",
+              "parameters": [ { "in": "path", "name": "state_name", "required": true, "schema": {"type": "string"} } ],
+              "responses": { "200": { "description": "List of crops" }, "404": { "description": "Not found" } }
+            }
+          },
+          "/api/suitability/crop/{crop_name}/{state_name}": {
+            "get": {
+              "summary": "Crop-state suitability details",
+              "parameters": [
+                { "in": "path", "name": "crop_name", "required": true, "schema": {"type": "string"} },
+                { "in": "path", "name": "state_name", "required": true, "schema": {"type": "string"} }
+              ],
+              "responses": { "200": { "description": "Suitability details" }, "404": { "description": "Not found" } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Market & Business APIs",
+      "description": "Market trends, forecasts, and schemes.",
+      "files": [ "app.py", "data_loader.py" ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": { "title": "CropMate Market APIs", "version": "1.0.0" },
+        "servers": [ { "url": "http://localhost:5000" } ],
+        "paths": {
+          "/api/market/trends": { "get": { "summary": "Market trends", "responses": {"200": {"description": "Trends data"}} } },
+          "/api/market/forecast/{crop_name}": {
+            "get": {
+              "summary": "Price forecast for crop",
+              "parameters": [ { "in": "path", "name": "crop_name", "required": true, "schema": {"type": "string"} } ],
+              "responses": { "200": { "description": "Forecast data" }, "404": { "description": "Not found" } }
+            }
+          },
+          "/api/market/insights/{crop_name}": {
+            "get": {
+              "summary": "Market insights for crop",
+              "parameters": [ { "in": "path", "name": "crop_name", "required": true, "schema": {"type": "string"} } ],
+              "responses": { "200": { "description": "Insights data" }, "404": { "description": "Not found" } }
+            }
+          },
+          "/api/schemes": { "get": { "summary": "Government schemes", "responses": {"200": {"description": "Schemes list"}} } }
+        }
+      }
+    },
+    {
+      "name": "Community APIs",
+      "description": "Community forums, stories and expert advice.",
+      "files": [ "app.py" ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": { "title": "CropMate Community APIs", "version": "1.0.0" },
+        "servers": [ { "url": "http://localhost:5000" } ],
+        "paths": {
+          "/api/community/forums": { "get": { "summary": "Community forums", "responses": {"200": {"description": "Forums list"}} } },
+          "/api/community/success-stories": { "get": { "summary": "Success stories", "responses": {"200": {"description": "Stories list"}} } },
+          "/api/community/expert-advice": { "get": { "summary": "Expert advice", "responses": {"200": {"description": "Advice list"}} } }
+        }
+      }
+    }
+  ]
+}
