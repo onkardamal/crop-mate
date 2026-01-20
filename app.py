@@ -203,9 +203,9 @@ INDIAN_STATES = {
     }
 }
 
-# Weather API configuration (using OpenWeatherMap - free tier)
-WEATHER_API_KEY = "demo_key"  # Replace with actual API key for production
-WEATHER_BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
+# Weather API configuration (using Open-Meteo - free, no API key required)
+# Docs: https://open-meteo.com/
+WEATHER_BASE_URL = "https://api.open-meteo.com/v1/forecast"
 
 # Location detection services
 LOCATION_SERVICES = {
@@ -1312,50 +1312,82 @@ def get_user_location_from_ip():
         }
 
 def get_weather_data(lat, lon):
-    """Get current weather data for given coordinates."""
+    """Get current weather data for given coordinates using Open-Meteo."""
     try:
         params = {
-            'lat': lat,
-            'lon': lon,
-            'appid': WEATHER_API_KEY,
-            'units': 'metric'  # Use Celsius
+            "latitude": lat,
+            "longitude": lon,
+            # Current conditions we care about
+            "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,pressure_msl,cloud_cover,weather_code",
+            # For sunrise/sunset we use daily data
+            "daily": "sunrise,sunset",
+            "timezone": "auto",
         }
         response = requests.get(WEATHER_BASE_URL, params=params, timeout=5)
         if response.status_code == 200:
             data = response.json()
+            current = data.get("current", {}) or {}
+            daily = data.get("daily", {}) or {}
+
+            # Open-Meteo uses weather codes; we keep it simple and expose the code
+            weather_code = current.get("weather_code")
+            description = f"Weather code {weather_code}" if weather_code is not None else "Not available"
+
+            sunrise_list = daily.get("sunrise") or []
+            sunset_list = daily.get("sunset") or []
+
             return {
-                'temperature': data['main']['temp'],
-                'humidity': data['main']['humidity'],
-                'pressure': data['main']['pressure'],
-                'description': data['weather'][0]['description'],
-                'wind_speed': data['wind']['speed'],
-                'visibility': data.get('visibility', 10000),
-                'clouds': data['clouds']['all'],
-                'sunrise': data['sys']['sunrise'],
-                'sunset': data['sys']['sunset']
+                "temperature": current.get("temperature_2m"),
+                "humidity": current.get("relative_humidity_2m"),
+                "pressure": current.get("pressure_msl"),
+                "description": description,
+                "wind_speed": current.get("wind_speed_10m"),
+                # Open-Meteo does not expose visibility directly
+                "visibility": None,
+                "clouds": current.get("cloud_cover"),
+                "sunrise": sunrise_list[0] if sunrise_list else None,
+                "sunset": sunset_list[0] if sunset_list else None,
             }
     except Exception as e:
-        print(f"Error getting weather data: {e}")
-    
+        print(f"Error getting weather data from Open-Meteo: {e}")
+
     return None
 
 def get_weather_forecast(lat, lon):
-    """Get 5-day weather forecast."""
+    """Get simple 5-step hourly weather forecast using Open-Meteo."""
     try:
-        forecast_url = "http://api.openweathermap.org/data/2.5/forecast"
         params = {
-            'lat': lat,
-            'lon': lon,
-            'appid': WEATHER_API_KEY,
-            'units': 'metric'
+            "latitude": lat,
+            "longitude": lon,
+            "hourly": "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code",
+            "timezone": "auto",
         }
-        response = requests.get(forecast_url, params=params, timeout=5)
+        response = requests.get(WEATHER_BASE_URL, params=params, timeout=5)
         if response.status_code == 200:
             data = response.json()
-            return data['list'][:5]  # Return next 5 days
+            hourly = data.get("hourly", {}) or {}
+            times = hourly.get("time") or []
+            temps = hourly.get("temperature_2m") or []
+            hums = hourly.get("relative_humidity_2m") or []
+            winds = hourly.get("wind_speed_10m") or []
+            codes = hourly.get("weather_code") or []
+
+            forecast = []
+            count = min(5, len(times))
+            for i in range(count):
+                forecast.append(
+                    {
+                        "time": times[i],
+                        "temperature": temps[i] if i < len(temps) else None,
+                        "humidity": hums[i] if i < len(hums) else None,
+                        "wind_speed": winds[i] if i < len(winds) else None,
+                        "weather_code": codes[i] if i < len(codes) else None,
+                    }
+                )
+            return forecast
     except Exception as e:
-        print(f"Error getting weather forecast: {e}")
-    
+        print(f"Error getting weather forecast from Open-Meteo: {e}")
+
     return None
 
 def map_weather_to_climate_zone(weather_data):
